@@ -13,17 +13,18 @@ import (
 type LogicID string
 
 // LogicIdentifier is a representation of LogicID that allows access to
-// the values encoded within it such the address or identifier version
+// the values encoded within it such as the address or identifier version
 //
 // Each version of the LogicID standard is available
 // as its own type that implements this interface.
 type LogicIdentifier interface {
 	// Version returns the version of the LogicID standard for the LogicIdentifier
 	Version() int
-	// LogicID returns the LogicIdentifier in its encoded representation as a LogicID
-	LogicID() LogicID
 	// Address returns the 32-byte address associated with the LogicID
 	Address() Address
+	// LogicID returns the LogicIdentifier in its encoded representation as a LogicID
+	LogicID() LogicID
+
 	// Edition returns the edition of the logic from the LogicID
 	Edition() uint64
 	// AssetLogic returns whether the logic is associated with some Asset
@@ -40,22 +41,22 @@ type LogicIdentifier interface {
 // NewLogicID generates a LogicID from some arbitrary string,
 // validating it in the process. It is version agnostic
 func NewLogicID(id string) (LogicID, error) {
-	logicID := LogicID(id)
+	logic := LogicID(id)
 
 	// Attempt to generate an identifier from the LogicID
 	// This will fail if the LogicID is invalid in any way
-	if _, err := logicID.Identifier(); err != nil {
+	if _, err := logic.Identifier(); err != nil {
 		return "", err
 	}
 
-	return logicID, nil
+	return logic, nil
 }
 
 // Bytes returns the LogicID as a []byte after being
 // decoded from its hexadecimal string representation.
 // Panics if the LogicID is not a valid hex string.
-func (logic LogicID) Bytes() ([]byte, error) {
-	return decodeHexString(string(logic))
+func (logic LogicID) Bytes() []byte {
+	return must(decodeHexString(string(logic)))
 }
 
 // String returns the LogicID as a string.
@@ -77,11 +78,6 @@ func (logic LogicID) Address() Address {
 	addr := string(logic[len(logic)-64:])
 	// Assertively decode into an Address
 	return must(NewAddressFromHex(addr))
-}
-
-// Address32 returns the Logic Address of the LogicID as a [32]byte
-func (logic LogicID) Address32() [32]byte {
-	return logic.Address()
 }
 
 // Identifier returns a LogicIdentifier for the LogicID.
@@ -114,14 +110,7 @@ func (logic LogicID) Identifier() (LogicIdentifier, error) {
 
 // MarshalText implements the encoding.TextMarshaler interface for LogicID
 func (logic LogicID) MarshalText() ([]byte, error) {
-	result := make([]byte, len(logic)*2+2)
-
-	// Copy the 0x into the buffer
-	copy(result[:2], "0x")
-	// Copy the rest of the logicID into the buffer
-	copy(result[2:], logic)
-
-	return result, nil
+	return []byte("0x" + string(logic)), nil
 }
 
 // UnmarshalText implements the encoding.TextUnmarshaler interface for LogicID
