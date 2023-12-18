@@ -55,6 +55,11 @@ func NewAddressFromHex(data string) (Address, error) {
 	return NewAddressFromBytes(decoded), nil
 }
 
+// IsNil returns if the Address is nil i.e, 0x0000...
+func (addr Address) IsNil() bool {
+	return addr == NilAddress
+}
+
 // Bytes returns the Address as a []byte
 func (addr Address) Bytes() []byte {
 	return addr[:]
