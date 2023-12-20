@@ -33,7 +33,7 @@ func NewAssetIDv0(logical, stateful bool, dimension uint8, standard uint16, addr
 
 	// Encode the 16-bit standard into its BigEndian bytes
 	standardBuf := make([]byte, 2)
-	binary.BigEndian.PutUint16(standardBuf, uint16(standard))
+	binary.BigEndian.PutUint16(standardBuf, standard)
 
 	// Order the asset ID buffer [head][dimension][standard][address]
 	buf := make([]byte, 0, 36)
