@@ -34,7 +34,7 @@ func TestLogicIDv0(t *testing.T) {
 		require.Equal(t, x.Address, logicID.Address())
 
 		// Check type conversions
-		require.Equal(t, string(logicID), logicID.String())
+		require.Equal(t, "0x"+string(logicID), logicID.String())
 		require.Equal(t, must(decodeHexString(string(logicID))), logicID.Bytes())
 
 		// Check identifier conversion
@@ -50,7 +50,7 @@ func TestLogicIDv0(t *testing.T) {
 		require.Equal(t, x.Interactive, identifier.HasInteractableSites())
 		require.Equal(t, x.AssetLogic, identifier.AssetLogic())
 
-		require.Equal(t, x.Edition, identifier.Edition())
+		require.Equal(t, uint64(x.Edition), identifier.Edition())
 		require.Equal(t, x.Address, identifier.Address())
 
 		// Check serialization

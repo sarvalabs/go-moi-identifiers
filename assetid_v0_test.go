@@ -32,7 +32,7 @@ func TestAssetIDv0(t *testing.T) {
 		require.Equal(t, x.Address, assetID.Address())
 
 		// Check type conversions
-		require.Equal(t, string(assetID), assetID.String())
+		require.Equal(t, "0x"+string(assetID), assetID.String())
 		require.Equal(t, must(decodeHexString(string(assetID))), assetID.Bytes())
 
 		// Check identifier conversion
@@ -47,7 +47,7 @@ func TestAssetIDv0(t *testing.T) {
 		require.Equal(t, x.Stateful, identifier.IsStateful())
 
 		require.Equal(t, x.Dimension, identifier.Dimension())
-		require.Equal(t, x.Standard, identifier.Standard())
+		require.Equal(t, uint64(x.Standard), identifier.Standard())
 		require.Equal(t, x.Address, identifier.Address())
 
 		// Check serialization
