@@ -1,6 +1,8 @@
 package identifiers
 
 import (
+	"encoding/json"
+
 	"github.com/pkg/errors"
 )
 
@@ -108,7 +110,7 @@ func (asset AssetID) Identifier() (AssetIdentifier, error) {
 
 // MarshalText implements the encoding.TextMarshaler interface for AssetID
 func (asset AssetID) MarshalText() ([]byte, error) {
-	return []byte("0x" + string(asset)), nil
+	return []byte(asset.String()), nil
 }
 
 // UnmarshalText implements the encoding.TextUnmarshaler interface for AssetID
@@ -126,6 +128,37 @@ func (asset *AssetID) UnmarshalText(text []byte) error {
 	}
 
 	*asset = AssetID(text)
+
+	return nil
+}
+
+// MarshalJSON implements the json.Marshaler interface for AssetID
+func (asset AssetID) MarshalJSON() ([]byte, error) {
+	return json.Marshal(asset.String())
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface for AssetID
+func (asset *AssetID) UnmarshalJSON(data []byte) error {
+	var decoded string
+
+	// Decode the JSON data into a string
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return err
+	}
+
+	// Assert that the 0x prefix exists
+	if !has0xPrefixString(decoded) {
+		return ErrMissing0xPrefix
+	}
+
+	// Trim the 0x prefix
+	decoded = trim0xPrefixString(decoded)
+	// Generate an identifier for the AssetID
+	if _, err := AssetID(decoded).Identifier(); err != nil {
+		return err
+	}
+
+	*asset = AssetID(decoded)
 
 	return nil
 }

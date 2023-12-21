@@ -1,6 +1,8 @@
 package identifiers
 
 import (
+	"encoding/json"
+
 	"github.com/pkg/errors"
 )
 
@@ -110,7 +112,7 @@ func (logic LogicID) Identifier() (LogicIdentifier, error) {
 
 // MarshalText implements the encoding.TextMarshaler interface for LogicID
 func (logic LogicID) MarshalText() ([]byte, error) {
-	return []byte("0x" + string(logic)), nil
+	return []byte(logic.String()), nil
 }
 
 // UnmarshalText implements the encoding.TextUnmarshaler interface for LogicID
@@ -128,6 +130,37 @@ func (logic *LogicID) UnmarshalText(text []byte) error {
 	}
 
 	*logic = LogicID(text)
+
+	return nil
+}
+
+// MarshalJSON implements the json.Marshaler interface for LogicID
+func (logic LogicID) MarshalJSON() ([]byte, error) {
+	return json.Marshal(logic.String())
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface for LogicID
+func (logic *LogicID) UnmarshalJSON(data []byte) error {
+	var decoded string
+
+	// Decode the JSON data into a string
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return err
+	}
+
+	// Assert that the 0x prefix exists
+	if !has0xPrefixString(decoded) {
+		return ErrMissing0xPrefix
+	}
+
+	// Trim the 0x prefix
+	decoded = trim0xPrefixString(decoded)
+	// Generate an identifier for the AssetID
+	if _, err := LogicID(decoded).Identifier(); err != nil {
+		return err
+	}
+
+	*logic = LogicID(decoded)
 
 	return nil
 }

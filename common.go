@@ -16,6 +16,10 @@ func trim0xPrefixString(value string) string {
 	return strings.TrimPrefix(value, prefix0xString)
 }
 
+func has0xPrefixString(value string) bool {
+	return strings.HasPrefix(value, prefix0xString)
+}
+
 func trim0xPrefixBytes(value []byte) []byte {
 	return bytes.TrimPrefix(value, prefix0xBytes)
 }
