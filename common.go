@@ -2,6 +2,7 @@ package identifiers
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/hex"
 	"errors"
 	"strings"
@@ -11,6 +12,12 @@ import (
 // Can be used to represent any nil identifier.
 var Nil [32]byte
 
+// RandomAccountID generates a random 24-byte account ID
+func RandomAccountID() (account [24]byte) {
+	_, _ = rand.Read(account[:])
+	return account
+}
+
 var (
 	prefix0xString = "0x"
 	prefix0xBytes  = []byte(prefix0xString)
@@ -19,7 +26,10 @@ var (
 var (
 	ErrMissingHexPrefix = errors.New("missing '0x' prefix")
 	ErrInvalidLength    = errors.New("invalid length")
-	ErrUnsupportedFlag  = errors.New("unsupported flag")
+
+	ErrUnsupportedFlag    = errors.New("unsupported flag")
+	ErrUnsupportedVersion = errors.New("unsupported tag version")
+	ErrUnsupportedKind    = errors.New("unsupported tag kind")
 )
 
 func trim0xPrefixString(value string) string {
