@@ -68,7 +68,7 @@ func (tag IdentifierTag) Validate() error {
 		return ErrUnsupportedVersion
 	}
 
-	if tag.Kind() == 0 || tag.Kind() > maxIdentifierKind {
+	if tag.Kind() > maxIdentifierKind {
 		return ErrUnsupportedKind
 	}
 
