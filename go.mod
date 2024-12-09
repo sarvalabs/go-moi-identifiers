@@ -1,11 +1,10 @@
 module github.com/sarvalabs/go-moi-identifiers
 
-go 1.20
+go 1.22
 
 require (
 	github.com/google/gofuzz v1.2.0
-	github.com/pkg/errors v0.9.1
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.10.0
 )
 
 require (
