@@ -6,7 +6,7 @@ import (
 )
 
 // Identifier represents a unique 32-byte (256-bit) identifier
-// This is the base type for all identifiers in the MOI.
+// This is the base type for all identifiers in the MOI Protocol.
 //
 // Every identifier is composed of 3 parts:
 //   - Metadata: The 4 most-significant bytes
@@ -78,13 +78,13 @@ func (tag IdentifierTag) Validate() error {
 // Tag returns the IdentifierTag from the Identifier
 func (id Identifier) Tag() IdentifierTag { return IdentifierTag(id[0]) }
 
-// Metadata returns the 4 most-significant bytes of the identifier
+// Metadata returns the 4 most-significant bytes of the Identifier
 func (id Identifier) Metadata() [4]byte { return trimHigh4(id) }
 
-// AccountID returns 24-byte account ID from the identifier
+// AccountID returns 24-byte account ID from the Identifier
 func (id Identifier) AccountID() [24]byte { return trimMid24(id) }
 
-// Variant returns the 4 least-significant bytes of the identifier as a uint32
+// Variant returns the 32-bit variant ID from the Identifier
 func (id Identifier) Variant() uint32 {
 	low4 := trimLow4(id)
 	return binary.BigEndian.Uint32(low4[:])
