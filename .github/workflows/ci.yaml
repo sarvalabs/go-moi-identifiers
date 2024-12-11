@@ -17,6 +17,7 @@ on:
       - "**.go"
       - "**.mod"
       - "**.sum"
+      - ".github/workflows/**.yaml"
 
   workflow_call: {}
   workflow_dispatch: {}
