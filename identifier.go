@@ -5,6 +5,72 @@ import (
 	"encoding/hex"
 )
 
+// IdentifierKind represents the kinds of recognized identifiers.
+type IdentifierKind byte
+
+const (
+	KindParticipant IdentifierKind = iota
+	KindAsset
+	KindLogic
+)
+
+// maxIdentifierKind represents the maximum supported IdentifierKind value
+const maxIdentifierKind = KindLogic
+
+// IdentifierTag represents the tag of an identifier.
+// The first 4-bit nibble represents the kind of the identifier (IdentifierKind),
+// and the second 4-bit nibble represents the version for that identifier kind.
+//
+// While the version is currently set to 0 for all kinds, it allows for future
+// changes to the identifier format while maintaining backward compatibility.
+//
+// This format allows for up to 16 different kinds of identifiers and 16 different
+// versions for each kind. While this headroom is excessive for current requirements,
+// and could be optimized further, using the nibble as the smallest unit, allows for
+// easily recognizing the kind and version of an identifier in its hexadecimal format.
+type IdentifierTag byte
+
+const (
+	TagParticipantV0 = IdentifierTag((KindParticipant << 4) | 0)
+	TagAssetV0       = IdentifierTag((KindAsset << 4) | 0)
+	TagLogicV0       = IdentifierTag((KindLogic << 4) | 0)
+)
+
+// Kind returns the IdentifierKind from the IdentifierTag
+func (tag IdentifierTag) Kind() IdentifierKind {
+	// Determine the kind from the upper 4 bits
+	return IdentifierKind(tag >> 4)
+}
+
+// Version returns the version from the IdentifierTag
+func (tag IdentifierTag) Version() uint8 {
+	// Determine the version from the lower 4 bits
+	return uint8(tag & 0x0F)
+}
+
+func (tag IdentifierTag) FlagMask() byte {
+	mask, ok := flagMasks[tag]
+	if !ok {
+		panic("missing flag mask for tag")
+	}
+
+	return mask
+}
+
+// Validate checks if the IdentifierTag is valid and returns an error if not.
+// An error is returned if the version is not supported or the kind is invalid
+func (tag IdentifierTag) Validate() error {
+	if tag.Version() != 0 {
+		return ErrUnsupportedVersion
+	}
+
+	if tag.Kind() > maxIdentifierKind {
+		return ErrUnsupportedKind
+	}
+
+	return nil
+}
+
 // Identifier represents a unique 32-byte (256-bit) identifier
 // This is the base type for all identifiers in the MOI Protocol.
 //
@@ -22,58 +88,18 @@ import (
 // The last 4 bytes represent a 32-bit variant number, which can be used for sub-identifiers.
 type Identifier [32]byte
 
-// IdentifierKind represents the kinds of recognized identifiers.
-// The identifiers specification allows for upto 16 (2^4) kinds,
-// but only the following are currently supported.
-type IdentifierKind byte
+// Bytes returns the Identifier as a []byte
+func (id Identifier) Bytes() []byte { return id[:] }
 
-const (
-	KindParticipant IdentifierKind = iota
-	KindGuardian
-	KindAsset
-	KindLogic
-)
+// String returns the Identifier as a hex-encoded string.
+// This is identical to Identifier.Hex() but is required for the fmt.Stringer interface
+func (id Identifier) String() string { return id.Hex() }
 
-// maxIdentifierKind represents the maximum supported IdentifierKind value
-const maxIdentifierKind = KindLogic
+// Hex returns the Identifier as a hex-encoded string with the 0x prefix
+func (id Identifier) Hex() string { return prefix0xString + hex.EncodeToString(id[:]) }
 
-// IdentifierTag represents the tag of an identifier.
-// The first 4-bit nibble represents the kind of the identifier (IdentifierKind),
-// and the second 4-bit nibble represents the version for that identifier kind.
-type IdentifierTag byte
-
-const (
-	TagParticipantV0 = IdentifierTag((KindParticipant << 4) | 0)
-	TagGuardianV0    = IdentifierTag((KindGuardian << 4) | 0)
-	TagAssetV0       = IdentifierTag((KindAsset << 4) | 0)
-	TagLogicV0       = IdentifierTag((KindLogic << 4) | 0)
-)
-
-// Kind returns the IdentifierKind from the IdentifierTag
-func (tag IdentifierTag) Kind() IdentifierKind {
-	// Determine the kind from the upper 4 bits
-	return IdentifierKind(tag >> 4)
-}
-
-// Version returns the version from the IdentifierTag
-func (tag IdentifierTag) Version() uint8 {
-	// Determine the version from the lower 4 bits
-	return uint8(tag & 0x0F)
-}
-
-// Validate checks if the IdentifierTag is valid and returns an error if not.
-// An error is returned if the version is not supported or the kind is invalid
-func (tag IdentifierTag) Validate() error {
-	if tag.Version() != 0 {
-		return ErrUnsupportedVersion
-	}
-
-	if tag.Kind() > maxIdentifierKind {
-		return ErrUnsupportedKind
-	}
-
-	return nil
-}
+// IsNil returns if the Identifier is nil, i.e., 0x000..000
+func (id Identifier) IsNil() bool { return id == Nil }
 
 // Tag returns the IdentifierTag from the Identifier
 func (id Identifier) Tag() IdentifierTag { return IdentifierTag(id[0]) }
@@ -90,22 +116,22 @@ func (id Identifier) Variant() uint32 {
 	return binary.BigEndian.Uint32(low4[:])
 }
 
-// Bytes returns the Identifier as a []byte
-func (id Identifier) Bytes() []byte { return id[:] }
+// IsVariant returns if the Identifier has a non-zero variant ID
+func (id Identifier) IsVariant() bool {
+	return id.Variant() != 0
+}
 
-// String returns the Identifier as a hex-encoded string.
-// This is identical to Identifier.Hex() but is required for the fmt.Stringer interface
-func (id Identifier) String() string { return id.Hex() }
-
-// Hex returns the Identifier as a hex-encoded string with the 0x prefix
-func (id Identifier) Hex() string { return prefix0xString + hex.EncodeToString(id[:]) }
-
-// IsNil returns if the Identifier is nil, i.e., 0x000..000
-func (id Identifier) IsNil() bool { return id == Nil }
+// AsParticipantID returns the Identifier as a ParticipantID.
+// Returns an error if the Identifier is not a valid ParticipantID
+func (id Identifier) AsParticipantID() (ParticipantID, error) { return NewParticipantID(id) }
 
 // AsAssetID returns the Identifier as an AssetID.
 // Returns an error if the Identifier is not a valid AssetID
 func (id Identifier) AsAssetID() (AssetID, error) { return NewAssetID(id) }
+
+// AsLogicID returns the Identifier as a LogicID.
+// Returns an error if the Identifier is not a valid LogicID
+func (id Identifier) AsLogicID() (LogicID, error) { return NewLogicID(id) }
 
 // MarshalText implements the encoding.TextMarshaler interface for Identifier
 func (id *Identifier) MarshalText() ([]byte, error) {

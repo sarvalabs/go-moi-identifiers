@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"math/rand/v2"
 )
 
 // LogicID is a unique identifier for a logic in the MOI Protocol.
@@ -49,75 +50,17 @@ func NewLogicIDFromHex(data string) (LogicID, error) {
 	return NewLogicIDFromBytes(decoded)
 }
 
-// Tag returns the IdentifierTag for the LogicID.
-func (logic LogicID) Tag() IdentifierTag {
-	return IdentifierTag(logic[0])
-}
+// MustLogicID is an enforced version of NewLogicID.
+// Panics if an error occurs. Use with caution.
+func MustLogicID(data [32]byte) LogicID { return must(NewLogicID(data)) }
 
-// AccountID returns the 24-byte account ID from the LogicID.
-func (logic LogicID) AccountID() [24]byte {
-	return trimMid24(logic)
-}
+// MustLogicIDFromBytes is an enforced version of NewLogicIDFromBytes.
+// Panics if an error occurs. Use with caution.
+func MustLogicIDFromBytes(data []byte) LogicID { return must(NewLogicIDFromBytes(data)) }
 
-// Variant returns the 32-bit variant ID from the LogicID.
-func (logic LogicID) Variant() uint32 {
-	low4 := trimLow4(logic)
-	return binary.BigEndian.Uint32(low4[:])
-}
-
-// LogicFlag is a flag specifier for LogicID's Flags.
-// Returns the minimum supported version and the bit location of the flag.
-//
-// All LogicID flags are located in the [1] index.
-// Use the LogicID.Flag() method to check if a specific flag is set.
-type LogicFlag func() (version, location uint8)
-
-// todo: add logic flags for hasLogicState, hasActorState, isAssetLogic
-
-// Flag returns if the given LogicFlag is set on the LogicID.
-//
-// If the specified flag is not supported by the LogicID's version,
-// it will return FALSE, regardless of the actual flag value.
-func (logic LogicID) Flag(flag LogicFlag) bool {
-	ver, loc := flag()
-
-	// Check if the flag is supported by the logic ID version
-	// If not supported, return FALSE, regardless of the actual flag value
-	if logic.Tag().Version() > ver {
-		return false
-	}
-
-	// Check if flag bit is set
-	return isBitSet(logic[1], loc)
-}
-
-// Validate returns an error if the LogicID is invalid.
-// An error is returned if the AssetID has an invalid tag or contains unsupported flags.
-func (logic LogicID) Validate() error {
-	// Check basic validity of the identifier tag
-	if err := logic.Tag().Validate(); err != nil {
-		return fmt.Errorf("invalid tag: %w", err)
-	}
-
-	// Check if the tag is an asset tag
-	if logic.Tag().Kind() != KindLogic {
-		return errors.New("invalid tag: not a logic identifier")
-	}
-
-	// Perform checks based on the asset ID version
-	switch logic.Tag().Version() {
-	case 0:
-		// Check if the flags for any position apart from 0, 1 & 2 are set
-		if (logic[1] & byte(0b00011111)) != 0 {
-			return errors.New("invalid flags: malformed flags for logic identifier v0")
-		}
-
-	default:
-		return ErrUnsupportedVersion
-	}
-
-	return nil
-}
+// MustLogicIDFromHex is an enforced version of NewLogicIDFromHex.
+// Panics if an error occurs. Use with caution.
+func MustLogicIDFromHex(data string) LogicID { return must(NewLogicIDFromHex(data)) }
 
 // Bytes returns the LogicID as a []byte
 func (logic LogicID) Bytes() []byte { return logic[:] }
@@ -141,6 +84,62 @@ func (logic LogicID) AsIdentifier() Identifier {
 	return Identifier(logic)
 }
 
+// Tag returns the IdentifierTag for the LogicID.
+func (logic LogicID) Tag() IdentifierTag {
+	return IdentifierTag(logic[0])
+}
+
+// AccountID returns the 24-byte account ID from the LogicID.
+func (logic LogicID) AccountID() [24]byte {
+	return trimMid24(logic)
+}
+
+// Variant returns the 32-bit variant ID from the LogicID.
+func (logic LogicID) Variant() uint32 {
+	low4 := trimLow4(logic)
+	return binary.BigEndian.Uint32(low4[:])
+}
+
+// IsVariant returns if the LogicID has a non-zero variant ID
+func (logic LogicID) IsVariant() bool {
+	return logic.Variant() != 0
+}
+
+// Flag returns if the given Flag is set on the LogicID.
+//
+// If the specified flag is not supported by the LogicID,
+// it will return False, regardless of the actual flag value.
+func (logic LogicID) Flag(flag Flag) bool {
+	// Check if the flag is supported by LogicID.
+	// If not supported, return FALSE, regardless of the actual flag value
+	if !flag.Supports(logic.Tag()) {
+		return false
+	}
+
+	return getFlag(logic[1], flag.index)
+}
+
+// Validate returns an error if the LogicID is invalid.
+// An error is returned if the LogicID has an invalid tag or contains unsupported flags.
+func (logic LogicID) Validate() error {
+	// Check basic validity of the identifier tag
+	if err := logic.Tag().Validate(); err != nil {
+		return fmt.Errorf("invalid tag: %w", err)
+	}
+
+	// Check if the tag is a logic tag
+	if logic.Tag().Kind() != KindLogic {
+		return errors.New("invalid tag: not a logic identifier")
+	}
+
+	// Check that there are no unsupported flags set
+	if (logic[1] & logic.Tag().FlagMask()) != 0 {
+		return errors.New("invalid flags: malformed flags for logic identifier")
+	}
+
+	return nil
+}
+
 // MarshalText implements the encoding.TextMarshaler interface for LogicID
 func (logic *LogicID) MarshalText() ([]byte, error) {
 	return marshal32(*logic)
@@ -160,24 +159,23 @@ func (logic *LogicID) UnmarshalText(data []byte) error {
 // GenerateLogicIDv0 creates a new LogicID for v0 with the given parameters.
 // Returns an error if unsupported flags are used.
 //
-// [tag:1][{hasLogicState}{hasActorState}{isAssetLogic}{reserved:5}][standard:2][account:24][variant:4]
-func GenerateLogicIDv0(account [24]byte, variant uint32, flagOpts ...LogicFlag) (LogicID, error) {
+// [tag:1][{intrinsic}{extrinsic}{auxiliary}{reserved:4}{systemic}][standard:2][account:24][variant:4]
+func GenerateLogicIDv0(account [24]byte, variant uint32, flags ...Flag) (LogicID, error) {
 	// Create the metadata buffer
 	// [tag][flags][standard]
 	metadata := make([]byte, 4)
-
 	// Attach the tag for LogicID v0
 	metadata[0] = byte(TagLogicV0)
+
 	// Attach the flags to the metadata
-	for _, opt := range flagOpts {
-		// Get the minimum supported version and the location of the flag
-		minver, loc := opt()
-		// Check that flag is supported by version 0
-		if 0 < minver {
+	for _, flag := range flags {
+		// Check if the given flag is supported by LogicID v0
+		if !flag.Supports(TagLogicV0) {
 			return Nil, ErrUnsupportedFlag
 		}
 
-		metadata[1] |= 1 << loc
+		// Set the flag in the metadata
+		metadata[1] = setFlag(metadata[1], flag.index, true)
 	}
 
 	// Order the logic ID buffer
@@ -192,19 +190,29 @@ func GenerateLogicIDv0(account [24]byte, variant uint32, flagOpts ...LogicFlag) 
 	return LogicID(buffer), nil
 }
 
-// RandomLogicID generates a random LogicID.
+// RandomLogicID creates a random v0 LogicID
+// with a random account ID, variant ID and flags.
+//   - There is a 50% chance that the LogicIntrinsic flag will be set.
+//   - There is a 50% chance that the LogicExtrinsic flag will be set.
+//   - There is a 50% chance that the LogicAuxiliary flag will be set.
+//   - There is a 0% chance that the Systemic flag will be set.
 func RandomLogicID() LogicID {
-	// todo
+	flags := make([]Flag, 0, 3)
+
+	if rand.Int64() > 0 {
+		flags = append(flags, LogicIntrinsic)
+	}
+
+	if rand.Int64() > 0 {
+		flags = append(flags, LogicExtrinsic)
+	}
+
+	if rand.Int64() > 0 {
+		flags = append(flags, LogicAuxiliary)
+	}
+
+	// Safe to ignore error as the flags are supported
+	logic, _ := GenerateLogicIDv0(RandomAccountID(), rand.Uint32(), flags...)
+
+	return logic
 }
-
-// MustLogicID is an enforced version of NewLogicID.
-// Panics if an error occurs. Use with caution.
-func MustLogicID(data [32]byte) LogicID { return must(NewLogicID(data)) }
-
-// MustLogicIDFromBytes is an enforced version of NewLogicIDFromBytes.
-// Panics if an error occurs. Use with caution.
-func MustLogicIDFromBytes(data []byte) LogicID { return must(NewLogicIDFromBytes(data)) }
-
-// MustLogicIDFromHex is an enforced version of NewLogicIDFromHex.
-// Panics if an error occurs. Use with caution.
-func MustLogicIDFromHex(data string) LogicID { return must(NewLogicIDFromHex(data)) }
