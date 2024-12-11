@@ -139,13 +139,11 @@ func (asset AssetID) Validate() error {
 
 	// Check if the tag is an asset tag
 	if asset.Tag().Kind() != KindAsset {
-		fmt.Println(asset.Tag())
-		fmt.Println(asset.Tag().Kind())
 		return errors.New("invalid tag: not an asset id")
 	}
 
 	// Check that there are no unsupported flags set
-	if (asset[1] & asset.Tag().FlagMask()) != 0 {
+	if (asset[1] & flagMasks[asset.Tag()]) != 0 {
 		return errors.New("invalid flags: unsupported flags for asset id")
 	}
 
@@ -153,14 +151,18 @@ func (asset AssetID) Validate() error {
 }
 
 // MarshalText implements the encoding.TextMarshaler interface for AssetID
-func (asset *AssetID) MarshalText() ([]byte, error) {
-	return marshal32(*asset)
+func (asset AssetID) MarshalText() ([]byte, error) {
+	return marshal32(asset)
 }
 
 // UnmarshalText implements the encoding.TextUnmarshaler interface for AssetID
 func (asset *AssetID) UnmarshalText(data []byte) error {
 	decoded, err := unmarshal32(data)
 	if err != nil {
+		return err
+	}
+
+	if err = AssetID(decoded).Validate(); err != nil {
 		return err
 	}
 

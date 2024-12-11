@@ -139,7 +139,7 @@ func (participant ParticipantID) Validate() error {
 	}
 
 	// Check that there are no unsupported flags set
-	if (participant[1] & participant.Tag().FlagMask()) != 0 {
+	if (participant[1] & flagMasks[participant.Tag()]) != 0 {
 		return errors.New("invalid flags: unsupported flags for participant id")
 	}
 
@@ -147,14 +147,18 @@ func (participant ParticipantID) Validate() error {
 }
 
 // MarshalText implements the encoding.TextMarshaler interface for ParticipantID
-func (participant *ParticipantID) MarshalText() ([]byte, error) {
-	return marshal32(*participant)
+func (participant ParticipantID) MarshalText() ([]byte, error) {
+	return marshal32(participant)
 }
 
 // UnmarshalText implements the encoding.TextUnmarshaler interface for ParticipantID
 func (participant *ParticipantID) UnmarshalText(data []byte) error {
 	decoded, err := unmarshal32(data)
 	if err != nil {
+		return err
+	}
+
+	if err = ParticipantID(decoded).Validate(); err != nil {
 		return err
 	}
 

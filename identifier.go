@@ -14,21 +14,17 @@ const (
 	KindLogic
 )
 
-// Supports returns if the IdentifierKind supports the given version number
-func (kind IdentifierKind) Supports(version uint8) bool {
-	supports := [...]uint8{0, 0, 0}
-	if int(kind) >= len(supports) {
-		return false
-	}
-
-	return version <= supports[kind]
-}
-
-// maxIdentifierKind represents the maximum supported IdentifierKind value
 const (
 	maxIdentifierKind = KindLogic
 	identifierV0      = 0
 )
+
+// kindSupport is a map of IdentifierKind to the maximum supported version.
+var kindSupport = map[IdentifierKind]uint8{
+	KindParticipant: 0,
+	KindAsset:       0,
+	KindLogic:       0,
+}
 
 // IdentifierTag represents the tag of an identifier.
 // The first 4-bit nibble represents the kind of the identifier (IdentifierKind),
@@ -61,15 +57,6 @@ func (tag IdentifierTag) Version() uint8 {
 	return uint8(tag & 0x0F)
 }
 
-func (tag IdentifierTag) FlagMask() byte {
-	mask, ok := flagMasks[tag]
-	if !ok {
-		panic("missing flag mask for tag")
-	}
-
-	return mask
-}
-
 // Validate checks if the IdentifierTag is valid and returns an error if not.
 // An error is returned if the version is not supported or the kind is invalid
 func (tag IdentifierTag) Validate() error {
@@ -79,7 +66,7 @@ func (tag IdentifierTag) Validate() error {
 	}
 
 	// Check if the version is supported for the kind
-	if !tag.Kind().Supports(tag.Version()) {
+	if tag.Version() > kindSupport[tag.Kind()] {
 		return ErrUnsupportedVersion
 	}
 
@@ -134,7 +121,7 @@ func (id Identifier) Variant() uint32 {
 // IsVariant returns if the Identifier has a non-zero variant ID
 func (id Identifier) IsVariant() bool {
 	low4 := trimLow4(id)
-	return low4[0] == 0 && low4[1] == 0 && low4[2] == 0 && low4[3] == 0
+	return !(low4[0] == 0 && low4[1] == 0 && low4[2] == 0 && low4[3] == 0)
 }
 
 // AsParticipantID returns the Identifier as a ParticipantID.

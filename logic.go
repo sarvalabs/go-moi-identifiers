@@ -135,7 +135,7 @@ func (logic LogicID) Validate() error {
 	}
 
 	// Check that there are no unsupported flags set
-	if (logic[1] & logic.Tag().FlagMask()) != 0 {
+	if (logic[1] & flagMasks[logic.Tag()]) != 0 {
 		return errors.New("invalid flags: unsupported flags for logic id")
 	}
 
@@ -143,14 +143,18 @@ func (logic LogicID) Validate() error {
 }
 
 // MarshalText implements the encoding.TextMarshaler interface for LogicID
-func (logic *LogicID) MarshalText() ([]byte, error) {
-	return marshal32(*logic)
+func (logic LogicID) MarshalText() ([]byte, error) {
+	return marshal32(logic)
 }
 
 // UnmarshalText implements the encoding.TextUnmarshaler interface for LogicID
 func (logic *LogicID) UnmarshalText(data []byte) error {
 	decoded, err := unmarshal32(data)
 	if err != nil {
+		return err
+	}
+
+	if err = LogicID(decoded).Validate(); err != nil {
 		return err
 	}
 
