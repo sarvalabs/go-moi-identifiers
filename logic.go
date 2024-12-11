@@ -104,7 +104,7 @@ func (logic LogicID) Variant() uint32 {
 // IsVariant returns if the LogicID has a non-zero variant ID
 func (logic LogicID) IsVariant() bool {
 	low4 := trimLow4(logic)
-	return low4[0] == 0 && low4[1] == 0 && low4[2] == 0 && low4[3] == 0
+	return !(low4[0] == 0 && low4[1] == 0 && low4[2] == 0 && low4[3] == 0)
 }
 
 // Flag returns if the given Flag is set on the LogicID.
@@ -161,7 +161,7 @@ func (logic *LogicID) UnmarshalText(data []byte) error {
 // GenerateLogicIDv0 creates a new LogicID for v0 with the given parameters.
 // Returns an error if unsupported flags are used.
 //
-// [tag:1][{intrinsic}{extrinsic}{auxiliary}{reserved:4}{systemic}][standard:2][account:24][variant:4]
+// [tag:1][{systemic}{reserved:4}{auxiliary}{extrinsic}{intrinsic}][standard:2][account:24][variant:4]
 func GenerateLogicIDv0(account [24]byte, variant uint32, flags ...Flag) (LogicID, error) {
 	// Create the metadata buffer
 	// [tag][flags][standard]

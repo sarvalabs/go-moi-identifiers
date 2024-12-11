@@ -106,7 +106,7 @@ func (asset AssetID) Variant() uint32 {
 // IsVariant returns if the AssetID has a non-zero variant ID
 func (asset AssetID) IsVariant() bool {
 	low4 := trimLow4(asset)
-	return low4[0] == 0 && low4[1] == 0 && low4[2] == 0 && low4[3] == 0
+	return !(low4[0] == 0 && low4[1] == 0 && low4[2] == 0 && low4[3] == 0)
 }
 
 // Standard returns the 16-bit standard for the AssetID.
@@ -171,7 +171,7 @@ func (asset *AssetID) UnmarshalText(data []byte) error {
 // GenerateAssetIDv0 creates a new AssetID for v0 with the given parameters.
 // Returns an error if unsupported flags are used.
 //
-// [tag:1][{logical}{stateful}{reserved:5}{systemic}][standard:2][account:24][variant:4]
+// [tag:1][{systemic}{reserved:5}{logical}{stateful}][standard:2][account:24][variant:4]
 func GenerateAssetIDv0(account [24]byte, variant uint32, standard uint16, flags ...Flag) (AssetID, error) {
 	// Create the metadata buffer
 	// [tag][flags][standard]

@@ -1,7 +1,11 @@
 package identifiers
 
+// Every identifier reserves its second byte (index 1) for some bit flags.
+// These flags are used to provide additional information about the identifier.
+// The flag indices start at 7 for the MSB and end at 0 for the LSB.
+
 var (
-	// Systemic is a Flag for the 7th flag bit on all identifiers regardless of the kind.
+	// Systemic is a Flag for the MSB on all identifiers flags regardless of the kind.
 	// It indicates that the account associated with identifier belongs to the system.
 	// Supported from v0 for all identifiers
 	Systemic = Flag{
@@ -59,7 +63,7 @@ func (flag Flag) Supports(tag IdentifierTag) bool {
 // getFlag retrieves a flag value from a given flag set and an index.
 func getFlag(value byte, index uint8) bool {
 	// Determine the bit value at the given index
-	bit := (value >> index) & 0x1
+	bit := value & (1 << index)
 	// Check if flag is set
 	return bit != 0
 }
@@ -101,7 +105,7 @@ func makeFlag(kind IdentifierKind, index uint8, version uint8) Flag {
 // A set bit indicates that position is not allowed for the tag,
 // While an unset bit indicates it is a supported flag for the tag.
 var flagMasks = map[IdentifierTag]byte{
-	TagParticipantV0: 0b11111110,
-	TagLogicV0:       0b00011110,
-	TagAssetV0:       0b00111110,
+	TagParticipantV0: 0b01111111,
+	TagLogicV0:       0b01111000,
+	TagAssetV0:       0b01111100,
 }

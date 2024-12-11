@@ -108,7 +108,7 @@ func (participant ParticipantID) Variant() uint32 {
 // IsVariant returns if the ParticipantID has a non-zero variant ID.
 func (participant ParticipantID) IsVariant() bool {
 	low4 := trimLow4(participant)
-	return low4[0] == 0 && low4[1] == 0 && low4[2] == 0 && low4[3] == 0
+	return !(low4[0] == 0 && low4[1] == 0 && low4[2] == 0 && low4[3] == 0)
 }
 
 // Flag returns if the given Flag is set on the ParticipantID.
@@ -165,7 +165,7 @@ func (participant *ParticipantID) UnmarshalText(data []byte) error {
 // GenerateParticipantIDv0 creates a new ParticipantID for v0 with the given parameters.
 // Returns an error if unsupported flags are used.
 //
-// [tag:1][{reserved:7}{systemic}][standard:2][account:24][variant:4]
+// [tag:1][{systemic}{reserved:7}][standard:2][account:24][variant:4]
 func GenerateParticipantIDv0(account [24]byte, variant uint32, flags ...Flag) (ParticipantID, error) {
 	// Create the metadata buffer
 	// [tag][flags][standard]
