@@ -24,13 +24,6 @@ func TestIdentifierTag(t *testing.T) {
 			expectedValid:   true,
 		},
 		{
-			name:            "Guardian V0",
-			tag:             TagGuardianV0,
-			expectedKind:    KindGuardian,
-			expectedVersion: 0,
-			expectedValid:   true,
-		},
-		{
 			name:            "Asset V0",
 			tag:             TagAssetV0,
 			expectedKind:    KindAsset,

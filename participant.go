@@ -106,7 +106,8 @@ func (participant ParticipantID) Variant() uint32 {
 
 // IsVariant returns if the ParticipantID has a non-zero variant ID.
 func (participant ParticipantID) IsVariant() bool {
-	return participant.Variant() != 0
+	low4 := trimLow4(participant)
+	return low4[0] == 0 && low4[1] == 0 && low4[2] == 0 && low4[3] == 0
 }
 
 // Flag returns if the given Flag is set on the ParticipantID.

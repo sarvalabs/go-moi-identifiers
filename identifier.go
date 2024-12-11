@@ -118,7 +118,8 @@ func (id Identifier) Variant() uint32 {
 
 // IsVariant returns if the Identifier has a non-zero variant ID
 func (id Identifier) IsVariant() bool {
-	return id.Variant() != 0
+	low4 := trimLow4(id)
+	return low4[0] == 0 && low4[1] == 0 && low4[2] == 0 && low4[3] == 0
 }
 
 // AsParticipantID returns the Identifier as a ParticipantID.

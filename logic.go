@@ -102,7 +102,8 @@ func (logic LogicID) Variant() uint32 {
 
 // IsVariant returns if the LogicID has a non-zero variant ID
 func (logic LogicID) IsVariant() bool {
-	return logic.Variant() != 0
+	low4 := trimLow4(logic)
+	return low4[0] == 0 && low4[1] == 0 && low4[2] == 0 && low4[3] == 0
 }
 
 // Flag returns if the given Flag is set on the LogicID.

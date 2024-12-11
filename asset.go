@@ -104,7 +104,8 @@ func (asset AssetID) Variant() uint32 {
 
 // IsVariant returns if the AssetID has a non-zero variant ID
 func (asset AssetID) IsVariant() bool {
-	return asset.Variant() != 0
+	low4 := trimLow4(asset)
+	return low4[0] == 0 && low4[1] == 0 && low4[2] == 0 && low4[3] == 0
 }
 
 // Standard returns the 16-bit standard for the AssetID.
