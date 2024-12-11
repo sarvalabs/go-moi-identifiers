@@ -15,7 +15,10 @@ const (
 )
 
 // maxIdentifierKind represents the maximum supported IdentifierKind value
-const maxIdentifierKind = KindLogic
+const (
+	maxIdentifierKind = KindLogic
+	identifierV0      = 0
+)
 
 // IdentifierTag represents the tag of an identifier.
 // The first 4-bit nibble represents the kind of the identifier (IdentifierKind),
@@ -31,9 +34,9 @@ const maxIdentifierKind = KindLogic
 type IdentifierTag byte
 
 const (
-	TagParticipantV0 = IdentifierTag((KindParticipant << 4) | 0)
-	TagAssetV0       = IdentifierTag((KindAsset << 4) | 0)
-	TagLogicV0       = IdentifierTag((KindLogic << 4) | 0)
+	TagParticipantV0 = IdentifierTag((KindParticipant << 4) | identifierV0)
+	TagAssetV0       = IdentifierTag((KindAsset << 4) | identifierV0)
+	TagLogicV0       = IdentifierTag((KindLogic << 4) | identifierV0)
 )
 
 // Kind returns the IdentifierKind from the IdentifierTag

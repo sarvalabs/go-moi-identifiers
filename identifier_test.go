@@ -46,7 +46,7 @@ func TestIdentifierTag(t *testing.T) {
 		},
 		{
 			name:            "Invalid Kind",
-			tag:             IdentifierTag((0x0F << 4) | 0),
+			tag:             IdentifierTag((0x0F << 4) | identifierV0),
 			expectedKind:    IdentifierKind(0x0F),
 			expectedVersion: 0,
 			expectedValid:   false,
