@@ -14,6 +14,16 @@ const (
 	KindLogic
 )
 
+// Supports returns if the IdentifierKind supports the given version number
+func (kind IdentifierKind) Supports(version uint8) bool {
+	supports := [...]uint8{0, 0, 0}
+	if int(kind) >= len(supports) {
+		return false
+	}
+
+	return version <= supports[kind]
+}
+
 // maxIdentifierKind represents the maximum supported IdentifierKind value
 const (
 	maxIdentifierKind = KindLogic
@@ -63,12 +73,14 @@ func (tag IdentifierTag) FlagMask() byte {
 // Validate checks if the IdentifierTag is valid and returns an error if not.
 // An error is returned if the version is not supported or the kind is invalid
 func (tag IdentifierTag) Validate() error {
-	if tag.Version() != 0 {
-		return ErrUnsupportedVersion
-	}
-
+	// Check if the kind is under the maximum supported kind
 	if tag.Kind() > maxIdentifierKind {
 		return ErrUnsupportedKind
+	}
+
+	// Check if the version is supported for the kind
+	if !tag.Kind().Supports(tag.Version()) {
+		return ErrUnsupportedVersion
 	}
 
 	return nil

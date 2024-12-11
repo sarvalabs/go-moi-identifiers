@@ -31,14 +31,19 @@ func NewLogicID(data [32]byte) (LogicID, error) {
 }
 
 // NewLogicIDFromBytes creates a new LogicID from the given byte slice.
-// The given value is trimmed/padded to 32 bytes and validated into a LogicID.
+// The given value must have a length of 32 and validate into an LogicID.
 func NewLogicIDFromBytes(data []byte) (LogicID, error) {
-	return NewLogicID(trim32(data))
+	// Check length of the data
+	if len(data) != 32 {
+		return Nil, errors.New("invalid length: logic id must be 32 bytes")
+	}
+
+	return NewLogicID([32]byte(data))
 }
 
 // NewLogicIDFromHex creates a new LogicID from the given hex string.
-// The given value is hex-decoded (must contain 0x prefix),
-// trimmed/padded to 32 bytes and validated into a LogicID.
+// The given value must decode as hexadecimal string (0x prefix is optional),
+// with a length of 64 characters (32 bytes) and validate into an LogicID.
 func NewLogicIDFromHex(data string) (LogicID, error) {
 	// Decode the given hex string into []byte
 	decoded, err := decodeHexString(data)
@@ -47,6 +52,7 @@ func NewLogicIDFromHex(data string) (LogicID, error) {
 	}
 
 	// Create a new LogicID from the decoded value
+	// Length check is performed in NewLogicIDFromBytes
 	return NewLogicIDFromBytes(decoded)
 }
 
@@ -72,11 +78,6 @@ func (logic LogicID) String() string { return logic.Hex() }
 // Hex returns the LogicID as a hex-encoded string with the 0x prefix
 func (logic LogicID) Hex() string {
 	return prefix0xString + hex.EncodeToString(logic[:])
-}
-
-// IsNil returns if the LogicID is nil, i.e., 0x000..000
-func (logic LogicID) IsNil() bool {
-	return logic == Nil
 }
 
 // AsIdentifier returns the LogicID as an Identifier.
@@ -130,12 +131,12 @@ func (logic LogicID) Validate() error {
 
 	// Check if the tag is a logic tag
 	if logic.Tag().Kind() != KindLogic {
-		return errors.New("invalid tag: not a logic identifier")
+		return errors.New("invalid tag: not a logic id")
 	}
 
 	// Check that there are no unsupported flags set
 	if (logic[1] & logic.Tag().FlagMask()) != 0 {
-		return errors.New("invalid flags: malformed flags for logic identifier")
+		return errors.New("invalid flags: unsupported flags for logic id")
 	}
 
 	return nil

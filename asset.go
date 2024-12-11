@@ -33,14 +33,19 @@ func NewAssetID(data [32]byte) (AssetID, error) {
 }
 
 // NewAssetIDFromBytes creates a new AssetID from the given byte slice.
-// The given value is trimmed/padded to 32 bytes and validated into an AssetID.
+// The given value must have a length of 32 and validate into an AssetID.
 func NewAssetIDFromBytes(data []byte) (AssetID, error) {
-	return NewAssetID(trim32(data))
+	// Check length of the data
+	if len(data) != 32 {
+		return Nil, errors.New("invalid length: asset id must be 32 bytes")
+	}
+
+	return NewAssetID([32]byte(data))
 }
 
 // NewAssetIDFromHex creates a new AssetID from the given hex string.
-// The given value is hex-decoded (must contain 0x prefix),
-// trimmed/padded to 32 bytes and validated into an AssetID.
+// The given value must decode as hexadecimal string (0x prefix is optional),
+// with a length of 64 characters (32 bytes) and validate into an AssetID.
 func NewAssetIDFromHex(data string) (AssetID, error) {
 	// Decode the given hex string into []byte
 	decoded, err := decodeHexString(data)
@@ -49,6 +54,7 @@ func NewAssetIDFromHex(data string) (AssetID, error) {
 	}
 
 	// Create a new AssetID from the decoded value
+	// Length check is performed in NewAssetIDFromBytes
 	return NewAssetIDFromBytes(decoded)
 }
 
@@ -74,11 +80,6 @@ func (asset AssetID) String() string { return asset.Hex() }
 // Hex returns the AssetID as a hex-encoded string with the 0x prefix
 func (asset AssetID) Hex() string {
 	return prefix0xString + hex.EncodeToString(asset[:])
-}
-
-// IsNil returns if the AssetID is nil, i.e., 0x000..000
-func (asset AssetID) IsNil() bool {
-	return asset == Nil
 }
 
 // AsIdentifier returns the AssetID as an AssetID.
@@ -138,12 +139,14 @@ func (asset AssetID) Validate() error {
 
 	// Check if the tag is an asset tag
 	if asset.Tag().Kind() != KindAsset {
-		return errors.New("invalid tag: not an asset identifier")
+		fmt.Println(asset.Tag())
+		fmt.Println(asset.Tag().Kind())
+		return errors.New("invalid tag: not an asset id")
 	}
 
 	// Check that there are no unsupported flags set
 	if (asset[1] & asset.Tag().FlagMask()) != 0 {
-		return errors.New("invalid flags: malformed flags for asset identifier")
+		return errors.New("invalid flags: unsupported flags for asset id")
 	}
 
 	return nil

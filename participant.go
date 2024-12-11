@@ -31,14 +31,19 @@ func NewParticipantID(data [32]byte) (ParticipantID, error) {
 }
 
 // NewParticipantIDFromBytes creates a new ParticipantID from the given byte slice.
-// The given value is trimmed/padded to 32 bytes and validated into a ParticipantID.
+// The given value must have a length of 32 and validate into a ParticipantID.
 func NewParticipantIDFromBytes(data []byte) (ParticipantID, error) {
-	return NewParticipantID(trim32(data))
+	// Check length of the data
+	if len(data) != 32 {
+		return Nil, errors.New("invalid length: participant id must be 32 bytes")
+	}
+
+	return NewParticipantID([32]byte(data))
 }
 
 // NewParticipantIDFromHex creates a new ParticipantID from the given hex string.
-// The given value is hex-decoded (must contain 0x prefix),
-// trimmed/padded to 32 bytes and validated into a ParticipantID.
+// The given value must decode as hexadecimal string (0x prefix is optional),
+// with a length of 64 characters (32 bytes) and validate into a ParticipantID.
 func NewParticipantIDFromHex(data string) (ParticipantID, error) {
 	// Decode the given hex string into []byte
 	decoded, err := decodeHexString(data)
@@ -47,6 +52,7 @@ func NewParticipantIDFromHex(data string) (ParticipantID, error) {
 	}
 
 	// Create a new ParticipantID from the decoded value
+	// Length check is performed in NewParticipantIDFromBytes
 	return NewParticipantIDFromBytes(decoded)
 }
 
@@ -76,11 +82,6 @@ func (participant ParticipantID) String() string { return participant.Hex() }
 // Hex returns the ParticipantID as a hex-encoded string with the 0x prefix.
 func (participant ParticipantID) Hex() string {
 	return prefix0xString + hex.EncodeToString(participant[:])
-}
-
-// IsNil returns if the ParticipantID is nil, i.e., 0x000..000.
-func (participant ParticipantID) IsNil() bool {
-	return participant == Nil
 }
 
 // AsIdentifier returns the ParticipantID as an Identifier.
@@ -134,12 +135,12 @@ func (participant ParticipantID) Validate() error {
 
 	// Check if the tag is a participant tag
 	if participant.Tag().Kind() != KindLogic {
-		return errors.New("invalid tag: not a participant identifier")
+		return errors.New("invalid tag: not a participant id")
 	}
 
 	// Check that there are no unsupported flags set
 	if (participant[1] & participant.Tag().FlagMask()) != 0 {
-		return errors.New("invalid flags: malformed flags for participant identifier")
+		return errors.New("invalid flags: unsupported flags for participant id")
 	}
 
 	return nil
