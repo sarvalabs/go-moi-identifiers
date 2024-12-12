@@ -3,6 +3,7 @@ package identifiers
 import (
 	"encoding/binary"
 	"encoding/hex"
+	"errors"
 )
 
 // IdentifierKind represents the kinds of recognized identifiers.
@@ -122,6 +123,43 @@ func (id Identifier) Variant() uint32 {
 func (id Identifier) IsVariant() bool {
 	low4 := trimLow4(id)
 	return !(low4[0] == 0 && low4[1] == 0 && low4[2] == 0 && low4[3] == 0)
+}
+
+// DeriveVariant returns a new Identifier with the given variant ID and specified flags set/unset.
+// Returns an error if the given flags are not supported for the Identifier tag.
+func (id Identifier) DeriveVariant(variant uint32, set []Flag, unset []Flag) (Identifier, error) {
+	// Check if the variant is the same as the original
+	if variant == id.Variant() {
+		return Nil, errors.New("cannot derive with the same variant")
+	}
+
+	var derived Identifier
+	// Copy the original identifier
+	copy(derived[:], id[:])
+	// Encode the new variant ID
+	binary.BigEndian.PutUint32(derived[28:], variant)
+
+	for _, flag := range set {
+		// Check if the given flag is supported by identifier tag
+		if !flag.Supports(derived.Tag()) {
+			return Nil, ErrUnsupportedFlag
+		}
+
+		// Set the flag
+		derived[1] = setFlag(derived[1], flag.index, true)
+	}
+
+	for _, flag := range unset {
+		// Check if the given flag is supported by identifier tag
+		if !flag.Supports(derived.Tag()) {
+			return Nil, ErrUnsupportedFlag
+		}
+
+		// Unset the flag
+		derived[1] = setFlag(derived[1], flag.index, false)
+	}
+
+	return derived, nil
 }
 
 // AsParticipantID returns the Identifier as a ParticipantID.

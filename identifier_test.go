@@ -118,6 +118,50 @@ func TestIdentifier(t *testing.T) {
 	assert.Equal(t, expectedHex, id.Hex())
 }
 
+func TestIdentifier_DeriveVariant(t *testing.T) {
+	// Create a test Identifier
+	identifier := RandomAssetIDv0().AsIdentifier()
+	variant := identifier.Variant()
+
+	// Derive a variant without changing any flags
+	derivedOne, err := identifier.DeriveVariant(variant+100, nil, nil)
+	require.NoError(t, err)
+
+	// Verify that the derived identifier has the new variant
+	assert.Equal(t, variant+100, derivedOne.Variant())
+	assert.Equal(t, identifier.Metadata(), derivedOne.Metadata())
+
+	// Derive another variant and set a flag
+	derivedTwo, err := derivedOne.DeriveVariant(variant+200, []Flag{AssetStateful}, nil)
+	require.NoError(t, err)
+
+	// Verify that the derived identifier has the new variant
+	assert.Equal(t, variant+200, derivedTwo.Variant())
+	// Verify that the derived identifier has the new flag set
+	assert.True(t, must(derivedTwo.AsAssetID()).Flag(AssetStateful))
+
+	// Derive another variant and unset a flag
+	derivedThree, err := derivedTwo.DeriveVariant(variant+300, nil, []Flag{AssetStateful})
+	require.NoError(t, err)
+
+	// Verify that the derived identifier has the new variant
+	assert.Equal(t, variant+300, derivedThree.Variant())
+	// Verify that the derived identifier has the new flag unset
+	assert.False(t, must(derivedThree.AsAssetID()).Flag(AssetStateful))
+
+	// Test DeriveVariant with unsupported flag set
+	_, err = derivedThree.DeriveVariant(variant+400, []Flag{LogicExtrinsic}, nil)
+	require.EqualError(t, err, ErrUnsupportedFlag.Error())
+
+	// Test DeriveVariant with unsupported flag unset
+	_, err = derivedThree.DeriveVariant(variant+400, nil, []Flag{LogicExtrinsic})
+	require.EqualError(t, err, ErrUnsupportedFlag.Error())
+
+	// Test DeriveVariant with same variant
+	_, err = derivedThree.DeriveVariant(derivedThree.Variant(), nil, nil)
+	require.EqualError(t, err, "cannot derive with the same variant")
+}
+
 func TestIdentifier_TextMarshal(t *testing.T) {
 	// Ensure Identifier implements text marshaling interfaces
 	var _ encoding.TextMarshaler = (*Identifier)(nil)
