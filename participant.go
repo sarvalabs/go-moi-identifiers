@@ -134,7 +134,7 @@ func (participant ParticipantID) Validate() error {
 	}
 
 	// Check if the tag is a participant tag
-	if participant.Tag().Kind() != KindLogic {
+	if participant.Tag().Kind() != KindParticipant {
 		return errors.New("invalid tag: not a participant id")
 	}
 
@@ -200,10 +200,10 @@ func GenerateParticipantIDv0(account [24]byte, variant uint32, flags ...Flag) (P
 	return ParticipantID(buffer), nil
 }
 
-// RandomParticipantID creates a random v0 ParticipantID
+// RandomParticipantIDv0 creates a random v0 ParticipantID
 // with a random account ID, variant ID and flags.
 //   - There is a 0% chance that the Systemic flag will be set.
-func RandomParticipantID() ParticipantID {
+func RandomParticipantIDv0() ParticipantID {
 	// Safe to ignore error as the flags are supported
 	participant, _ := GenerateParticipantIDv0(RandomAccountID(), rand.Uint32())
 	return participant

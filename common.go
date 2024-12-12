@@ -61,22 +61,6 @@ func decodeHexString(str string) ([]byte, error) {
 	return decoded, nil
 }
 
-//// trim32 trims/pads the given byte slice to 32 bytes
-//func trim32(data []byte) (trim [32]byte) {
-//	// Trim the data if it is longer than 32 bytes
-//	if len(data) > 32 {
-//		data = data[len(data)-32:]
-//	}
-//
-//	// Copy the data into the trimmed array
-//	// This automatically pads the array if the given data is less than 32 bytes
-//	copy(trim[32-len(data):], data)
-//
-//	fmt.Println(trim)
-//
-//	return
-//}
-
 // trimHigh4 returns the 4 most-significant bytes of the given 32-byte array.
 func trimHigh4(bytes [32]byte) [4]byte {
 	return [4]byte(bytes[:4])

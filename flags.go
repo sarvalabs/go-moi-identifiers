@@ -89,7 +89,7 @@ func makeFlag(kind IdentifierKind, index uint8, version uint8) Flag {
 		panic("invalid flag location: must be between 0 and 7")
 	}
 
-	if version > 7 {
+	if version > 15 {
 		panic("invalid flag version: must be between 0 and 7")
 	}
 

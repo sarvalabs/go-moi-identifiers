@@ -196,13 +196,13 @@ func GenerateLogicIDv0(account [24]byte, variant uint32, flags ...Flag) (LogicID
 	return LogicID(buffer), nil
 }
 
-// RandomLogicID creates a random v0 LogicID
+// RandomLogicIDv0 creates a random v0 LogicID
 // with a random account ID, variant ID and flags.
 //   - There is a 50% chance that the LogicIntrinsic flag will be set.
 //   - There is a 50% chance that the LogicExtrinsic flag will be set.
 //   - There is a 50% chance that the LogicAuxiliary flag will be set.
 //   - There is a 0% chance that the Systemic flag will be set.
-func RandomLogicID() LogicID {
+func RandomLogicIDv0() LogicID {
 	flags := make([]Flag, 0, 3)
 
 	if rand.Int64() > 0 {
