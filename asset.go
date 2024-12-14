@@ -10,10 +10,10 @@ import (
 )
 
 // AssetID is a unique identifier for an asset in the MOI Protocol.
-// It is 32 bytes long and its metadata is structured as follows:
+// It is 32 bytes long and its first 4 bytes are structured as follows:
 //   - Tag: The first byte contains the tag for the asset identifier.
 //   - Flags: The second byte contains flags for the asset identifier.
-//   - Standard: The next 2 bytes contain the standard for the asset.
+//   - Metadata: The next 2 bytes contain the standard for the asset.
 //
 // Like all identifiers, the AssetID also contains an AccountID and a Variant ID.
 // Flags of an AssetID are specific to a version and are invalid if set in an unsupported version.
@@ -94,19 +94,19 @@ func (asset AssetID) Tag() IdentifierTag {
 
 // AccountID returns the 24-byte account ID from the AssetID.
 func (asset AssetID) AccountID() [24]byte {
-	return trimMid24(asset)
+	return trimAccount(asset)
 }
 
 // Variant returns the 32-bit variant ID from the AssetID.
 func (asset AssetID) Variant() uint32 {
-	low4 := trimLow4(asset)
-	return binary.BigEndian.Uint32(low4[:])
+	variant := trimVariant(asset)
+	return binary.BigEndian.Uint32(variant[:])
 }
 
 // IsVariant returns if the AssetID has a non-zero variant ID
 func (asset AssetID) IsVariant() bool {
-	low4 := trimLow4(asset)
-	return !(low4[0] == 0 && low4[1] == 0 && low4[2] == 0 && low4[3] == 0)
+	variant := trimVariant(asset)
+	return !(variant[0] == 0 && variant[1] == 0 && variant[2] == 0 && variant[3] == 0)
 }
 
 // Standard returns the 16-bit standard for the AssetID.

@@ -9,9 +9,10 @@ import (
 )
 
 // LogicID is a unique identifier for a logic in the MOI Protocol.
-// It is 32 bytes long and its metadata is structured as follows:
+// It is 32 bytes long and its first 4 bytes are structured as follows:
 //   - Tag: The first byte contains the tag for the logic identifier.
 //   - Flags: The second byte contains flags for the logic identifier.
+//   - Metadata: As of v0, LogicID has no metadata.
 //
 // Like all identifiers, the LogicID also contains an AccountID and a Variant ID.
 // Flags of a LogicID are specific to a version and are invalid if set in an unsupported version.
@@ -92,19 +93,19 @@ func (logic LogicID) Tag() IdentifierTag {
 
 // AccountID returns the 24-byte account ID from the LogicID.
 func (logic LogicID) AccountID() [24]byte {
-	return trimMid24(logic)
+	return trimAccount(logic)
 }
 
 // Variant returns the 32-bit variant ID from the LogicID.
 func (logic LogicID) Variant() uint32 {
-	low4 := trimLow4(logic)
-	return binary.BigEndian.Uint32(low4[:])
+	variant := trimVariant(logic)
+	return binary.BigEndian.Uint32(variant[:])
 }
 
 // IsVariant returns if the LogicID has a non-zero variant ID
 func (logic LogicID) IsVariant() bool {
-	low4 := trimLow4(logic)
-	return !(low4[0] == 0 && low4[1] == 0 && low4[2] == 0 && low4[3] == 0)
+	variant := trimVariant(logic)
+	return !(variant[0] == 0 && variant[1] == 0 && variant[2] == 0 && variant[3] == 0)
 }
 
 // Flag returns if the given Flag is set on the LogicID.

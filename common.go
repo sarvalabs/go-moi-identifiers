@@ -61,18 +61,13 @@ func decodeHexString(str string) ([]byte, error) {
 	return decoded, nil
 }
 
-// trimHigh4 returns the 4 most-significant bytes of the given 32-byte array.
-func trimHigh4(bytes [32]byte) [4]byte {
-	return [4]byte(bytes[:4])
-}
-
-// trimMid24 returns the 24 bytes in the middle of the given 32-byte array.
-func trimMid24(bytes [32]byte) [24]byte {
+// trimAccount returns the 24 bytes in the middle of the given 32-byte array.
+func trimAccount(bytes [32]byte) [24]byte {
 	return [24]byte(bytes[4:28])
 }
 
-// trimLow4 returns the 4 least-significant bytes of the given 32-byte array.
-func trimLow4(bytes [32]byte) [4]byte {
+// trimVariant returns the 4 least-significant bytes of the given 32-byte array.
+func trimVariant(bytes [32]byte) [4]byte {
 	return [4]byte(bytes[28:])
 }
 

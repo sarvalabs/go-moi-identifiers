@@ -76,7 +76,7 @@ func TestIdentifier(t *testing.T) {
 	data := [32]byte{
 		byte(TagParticipantV0), // Tag
 		0b00000001,             // Flags
-		0x02, 0x03,             // Auxiliary
+		0x02, 0x03,             // Metadata
 
 		// Account ID
 		0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B,
@@ -88,11 +88,10 @@ func TestIdentifier(t *testing.T) {
 	// Create a test Identifier
 	id := Identifier(data)
 
-	// Test Tag
+	// Test Tag, Flags & Metadata
 	assert.Equal(t, TagParticipantV0, id.Tag())
-
-	// Test Metadata
-	assert.Equal(t, [4]byte{byte(TagParticipantV0), 0x01, 0x02, 0x03}, id.Metadata())
+	assert.Equal(t, byte(0b00000001), id.Flags())
+	assert.Equal(t, [2]byte{0x02, 0x03}, id.Metadata())
 
 	// Test AccountID
 	assert.Equal(t, [24]byte{

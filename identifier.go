@@ -77,9 +77,11 @@ func (tag IdentifierTag) Validate() error {
 // Identifier represents a unique 32-byte (256-bit) identifier
 // This is the base type for all identifiers in the MOI Protocol.
 //
-// Every identifier is composed of 3 parts:
-//   - Metadata: The 4 most-significant bytes
-//   - AccountID: The 24 middle bytes
+// Every identifier is composed of 5 parts:
+//   - Tag: The most-significant byte
+//   - Flags: The second byte
+//   - Metadata: The 3rd & 4th byte
+//   - AccountID: The next 24 middle bytes
 //   - Variant: The 4 least-significant bytes
 //
 // The first byte of the metadata contain a tag represented by IdentifierTag,
@@ -107,22 +109,25 @@ func (id Identifier) IsNil() bool { return id == Nil }
 // Tag returns the IdentifierTag from the Identifier
 func (id Identifier) Tag() IdentifierTag { return IdentifierTag(id[0]) }
 
-// Metadata returns the 4 most-significant bytes of the Identifier
-func (id Identifier) Metadata() [4]byte { return trimHigh4(id) }
+// Flags returns the byte of flag bits from the Identifier
+func (id Identifier) Flags() byte { return id[1] }
+
+// Metadata returns the 3rd & 4th bytes of the Identifier
+func (id Identifier) Metadata() [2]byte { return [2]byte{id[2], id[3]} }
 
 // AccountID returns 24-byte account ID from the Identifier
-func (id Identifier) AccountID() [24]byte { return trimMid24(id) }
+func (id Identifier) AccountID() [24]byte { return trimAccount(id) }
 
 // Variant returns the 32-bit variant ID from the Identifier
 func (id Identifier) Variant() uint32 {
-	low4 := trimLow4(id)
-	return binary.BigEndian.Uint32(low4[:])
+	variant := trimVariant(id)
+	return binary.BigEndian.Uint32(variant[:])
 }
 
 // IsVariant returns if the Identifier has a non-zero variant ID
 func (id Identifier) IsVariant() bool {
-	low4 := trimLow4(id)
-	return !(low4[0] == 0 && low4[1] == 0 && low4[2] == 0 && low4[3] == 0)
+	variant := trimVariant(id)
+	return !(variant[0] == 0 && variant[1] == 0 && variant[2] == 0 && variant[3] == 0)
 }
 
 // DeriveVariant returns a new Identifier with the given variant ID and specified flags set/unset.

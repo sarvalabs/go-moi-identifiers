@@ -9,9 +9,10 @@ import (
 )
 
 // ParticipantID is a unique identifier for a participant in the MOI Protocol.
-// It is 32 bytes long and its metadata is structured as follows:
+// It is 32 bytes long and its first 4 bytes are structured as follows:
 //   - Tag: The first byte contains the tag for the participant identifier.
 //   - Flags: The second byte contains flags for the participant identifier.
+//   - Metadata: As of v0, ParticipantID has no metadata.
 //
 // Like all identifiers, the ParticipantID also contains an AccountID and a Variant ID.
 // Flags of a ParticipantID are specific to a version and are invalid if set in an unsupported version.
@@ -96,19 +97,19 @@ func (participant ParticipantID) Tag() IdentifierTag {
 
 // AccountID returns the 24-byte account ID from the ParticipantID.
 func (participant ParticipantID) AccountID() [24]byte {
-	return trimMid24(participant)
+	return trimAccount(participant)
 }
 
 // Variant returns the 32-bit variant ID from the ParticipantID.
 func (participant ParticipantID) Variant() uint32 {
-	low4 := trimLow4(participant)
-	return binary.BigEndian.Uint32(low4[:])
+	variant := trimVariant(participant)
+	return binary.BigEndian.Uint32(variant[:])
 }
 
 // IsVariant returns if the ParticipantID has a non-zero variant ID.
 func (participant ParticipantID) IsVariant() bool {
-	low4 := trimLow4(participant)
-	return !(low4[0] == 0 && low4[1] == 0 && low4[2] == 0 && low4[3] == 0)
+	variant := trimVariant(participant)
+	return !(variant[0] == 0 && variant[1] == 0 && variant[2] == 0 && variant[3] == 0)
 }
 
 // Flag returns if the given Flag is set on the ParticipantID.
