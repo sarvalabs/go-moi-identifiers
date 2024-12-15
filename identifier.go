@@ -131,11 +131,17 @@ func (id Identifier) IsVariant() bool {
 }
 
 // DeriveVariant returns a new Identifier with the given variant ID and specified flags set/unset.
-// Returns an error if the given flags are not supported for the Identifier tag.
+// Returns an error if the given flags are not supported for the Identifier tag or
+// if attempting to derive from a derived identifier.
 func (id Identifier) DeriveVariant(variant uint32, set []Flag, unset []Flag) (Identifier, error) {
-	// Check if the variant is the same as the original
-	if variant == id.Variant() {
-		return Nil, errors.New("cannot derive with the same variant")
+	// Check if the identifier is already a variant
+	if id.IsVariant() {
+		return Nil, errors.New("cannot derive from a derived identifier")
+	}
+
+	// Check that the target variant is not zero
+	if variant == 0 {
+		return Nil, errors.New("derivation target variant cannot be zero")
 	}
 
 	var derived Identifier

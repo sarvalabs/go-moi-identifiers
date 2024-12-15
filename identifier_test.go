@@ -118,47 +118,94 @@ func TestIdentifier(t *testing.T) {
 }
 
 func TestIdentifier_DeriveVariant(t *testing.T) {
-	// Create a test Identifier
-	identifier := RandomAssetIDv0().AsIdentifier()
-	variant := identifier.Variant()
+	t.Run("AlreadyDerived", func(t *testing.T) {
+		// Generate a logic ID with a non-zero variant
+		identifier, err := GenerateLogicIDv0(RandomAccountID(), 100)
+		require.NoError(t, err)
 
-	// Derive a variant without changing any flags
-	derivedOne, err := identifier.DeriveVariant(variant+100, nil, nil)
-	require.NoError(t, err)
+		// Attempt derivation
+		_, err = identifier.AsIdentifier().DeriveVariant(200, nil, nil)
+		require.EqualError(t, err, "cannot derive from a derived identifier")
+	})
 
-	// Verify that the derived identifier has the new variant
-	assert.Equal(t, variant+100, derivedOne.Variant())
-	assert.Equal(t, identifier.Metadata(), derivedOne.Metadata())
+	t.Run("AlreadyDerived", func(t *testing.T) {
+		// Generate a logic ID with a zero variant
+		identifier, err := GenerateLogicIDv0(RandomAccountID(), 0)
+		require.NoError(t, err)
 
-	// Derive another variant and set a flag
-	derivedTwo, err := derivedOne.DeriveVariant(variant+200, []Flag{AssetStateful}, nil)
-	require.NoError(t, err)
+		// Attempt derivation to zero variant
+		_, err = identifier.AsIdentifier().DeriveVariant(0, nil, nil)
+		require.EqualError(t, err, "derivation target variant cannot be zero")
+	})
 
-	// Verify that the derived identifier has the new variant
-	assert.Equal(t, variant+200, derivedTwo.Variant())
-	// Verify that the derived identifier has the new flag set
-	assert.True(t, must(derivedTwo.AsAssetID()).Flag(AssetStateful))
+	t.Run("SimpleDerivation", func(t *testing.T) {
+		// Generate an asset ID with a zero variant (and standard = 0)
+		identifier, err := GenerateAssetIDv0(RandomAccountID(), 0, 0)
+		require.NoError(t, err)
 
-	// Derive another variant and unset a flag
-	derivedThree, err := derivedTwo.DeriveVariant(variant+300, nil, []Flag{AssetStateful})
-	require.NoError(t, err)
+		// Attempt derivation without changing any flags
+		derived, err := identifier.AsIdentifier().DeriveVariant(100, nil, nil)
+		require.NoError(t, err)
 
-	// Verify that the derived identifier has the new variant
-	assert.Equal(t, variant+300, derivedThree.Variant())
-	// Verify that the derived identifier has the new flag unset
-	assert.False(t, must(derivedThree.AsAssetID()).Flag(AssetStateful))
+		// Verify that the derived identifier has the new variant
+		assert.Equal(t, uint32(100), derived.Variant())
+		// Verify that the derived identifier has the same flags
+		assert.Equal(t, identifier.AsIdentifier().Flags(), derived.Flags())
+	})
 
-	// Test DeriveVariant with unsupported flag set
-	_, err = derivedThree.DeriveVariant(variant+400, []Flag{LogicExtrinsic}, nil)
-	require.EqualError(t, err, ErrUnsupportedFlag.Error())
+	t.Run("DeriveWithSetFlag", func(t *testing.T) {
+		// Generate an asset ID with a zero variant (and standard = 0)
+		identifier, err := GenerateAssetIDv0(RandomAccountID(), 0, 0)
+		require.NoError(t, err)
 
-	// Test DeriveVariant with unsupported flag unset
-	_, err = derivedThree.DeriveVariant(variant+400, nil, []Flag{LogicExtrinsic})
-	require.EqualError(t, err, ErrUnsupportedFlag.Error())
+		// Attempt derivation with a new variant and a flag set
+		derived, err := identifier.AsIdentifier().DeriveVariant(100, []Flag{AssetStateful}, nil)
+		require.NoError(t, err)
 
-	// Test DeriveVariant with same variant
-	_, err = derivedThree.DeriveVariant(derivedThree.Variant(), nil, nil)
-	require.EqualError(t, err, "cannot derive with the same variant")
+		// Verify that the derived identifier has the new variant
+		assert.Equal(t, uint32(100), derived.Variant())
+		// Verify that the derived identifier has the new flag set
+		assert.True(t, must(derived.AsAssetID()).Flag(AssetStateful))
+	})
+
+	t.Run("DeriveWithUnsupportedSet", func(t *testing.T) {
+		// Generate a logic ID with a zero variant
+		identifier, err := GenerateLogicIDv0(RandomAccountID(), 0)
+		require.NoError(t, err)
+
+		// Attempt derivation with a new variant and an unsupported flag set
+		_, err = identifier.AsIdentifier().DeriveVariant(100, []Flag{AssetStateful}, nil)
+		require.EqualError(t, err, ErrUnsupportedFlag.Error())
+	})
+
+	t.Run("DeriveWithUnsetFlag", func(t *testing.T) {
+		// Generate an asset ID with a zero variant (and standard = 0)
+		// Set the AssetStateful flag
+		identifier, err := GenerateAssetIDv0(RandomAccountID(), 0, 0, AssetStateful)
+		require.NoError(t, err)
+		require.True(t, identifier.Flag(AssetStateful))
+
+		// Attempt derivation with a new variant and a flag unset
+		derived, err := identifier.AsIdentifier().DeriveVariant(100, nil, []Flag{AssetStateful})
+		require.NoError(t, err)
+
+		// Verify that the derived identifier has the new variant
+		assert.Equal(t, uint32(100), derived.Variant())
+		// Verify that the derived identifier has the new flag unset
+		assert.False(t, must(derived.AsAssetID()).Flag(AssetStateful))
+	})
+
+	t.Run("DeriveWithUnsupportedUnset", func(t *testing.T) {
+		// Generate a logic ID with a zero variant
+		identifier, err := GenerateLogicIDv0(RandomAccountID(), 0, LogicIntrinsic)
+		require.NoError(t, err)
+		require.True(t, identifier.Flag(LogicIntrinsic))
+
+		// Attempt derivation with a new variant and an unsupported flag unset
+		_, err = identifier.AsIdentifier().DeriveVariant(100, nil, []Flag{AssetStateful})
+		require.EqualError(t, err, ErrUnsupportedFlag.Error())
+
+	})
 }
 
 func TestIdentifier_TextMarshal(t *testing.T) {
