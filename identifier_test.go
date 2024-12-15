@@ -204,7 +204,6 @@ func TestIdentifier_DeriveVariant(t *testing.T) {
 		// Attempt derivation with a new variant and an unsupported flag unset
 		_, err = identifier.AsIdentifier().DeriveVariant(100, nil, []Flag{AssetStateful})
 		require.EqualError(t, err, ErrUnsupportedFlag.Error())
-
 	})
 }
 
