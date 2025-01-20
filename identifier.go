@@ -4,6 +4,7 @@ import (
 	"encoding"
 	"encoding/binary"
 	"encoding/hex"
+	"errors"
 )
 
 // IdentifierKind represents the kinds of recognized identifiers.
@@ -92,6 +93,27 @@ func (tag IdentifierTag) Validate() error {
 // The next 24 bytes represent the account ID, which is unique to each kind of identifier.
 // The last 4 bytes represent a 32-bit variant number, which can be used for sub-identifiers.
 type Identifier [32]byte
+
+// NewIdentifierFromHex creates a new Identifier from the given hex string.
+// The given value must decode as hexadecimal string (0x prefix is optional), with a length of 64 characters (32 bytes)
+func NewIdentifierFromHex(data string) (Identifier, error) {
+	// Decode the given hex string into []byte
+	decoded, err := decodeHexString(data)
+	if err != nil {
+		return Nil, err
+	}
+
+	// Check length of the data
+	if len(decoded) != 32 {
+		return Nil, errors.New("invalid length: identifier must be 32 bytes")
+	}
+
+	return Identifier(decoded), nil
+}
+
+// MustIdentifierFromHex is an enforced version of NewIdentifierFromHex.
+// Panics if an error occurs. Use with caution.
+func MustIdentifierFromHex(data string) Identifier { return must(NewIdentifierFromHex(data)) }
 
 // Bytes returns the Identifier as a []byte
 func (id Identifier) Bytes() []byte { return id[:] }

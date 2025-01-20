@@ -117,6 +117,28 @@ func TestIdentifier(t *testing.T) {
 	assert.Equal(t, expectedHex, id.Hex())
 }
 
+func TestIdentifier_FromHex(t *testing.T) {
+	t.Run("ValidHex", func(t *testing.T) {
+		_, err := NewIdentifierFromHex(RandomAssetIDv0().AsIdentifier().Hex())
+		require.NoError(t, err)
+
+		_, err = NewIdentifierFromHex(trim0xPrefixString(RandomAssetIDv0().AsIdentifier().Hex()))
+		require.NoError(t, err)
+	})
+
+	t.Run("InvalidHex", func(t *testing.T) {
+		_, err := NewIdentifierFromHex("invalid-hex")
+		require.EqualError(t, err, "encoding/hex: invalid byte: U+0069 'i'")
+
+		_, err = NewIdentifierFromHex("0xf") // odd length
+		require.EqualError(t, err, "encoding/hex: odd length hex string")
+	})
+
+	t.Run("MustFromHex", func(t *testing.T) {
+		assert.Panics(t, func() { _ = MustIdentifierFromHex("0xFF") })
+	})
+}
+
 func TestIdentifier_DeriveVariant(t *testing.T) {
 	t.Run("SimpleDerivation", func(t *testing.T) {
 		// Generate an asset ID with a zero variant (and standard = 0)
