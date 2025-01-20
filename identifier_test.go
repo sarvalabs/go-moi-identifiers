@@ -118,26 +118,6 @@ func TestIdentifier(t *testing.T) {
 }
 
 func TestIdentifier_DeriveVariant(t *testing.T) {
-	t.Run("AlreadyDerived", func(t *testing.T) {
-		// Generate a logic ID with a non-zero variant
-		identifier, err := GenerateLogicIDv0(RandomAccountID(), 100)
-		require.NoError(t, err)
-
-		// Attempt derivation
-		_, err = identifier.AsIdentifier().DeriveVariant(200, nil, nil)
-		require.EqualError(t, err, "cannot derive from a derived identifier")
-	})
-
-	t.Run("AlreadyDerived", func(t *testing.T) {
-		// Generate a logic ID with a zero variant
-		identifier, err := GenerateLogicIDv0(RandomAccountID(), 0)
-		require.NoError(t, err)
-
-		// Attempt derivation to zero variant
-		_, err = identifier.AsIdentifier().DeriveVariant(0, nil, nil)
-		require.EqualError(t, err, "derivation target variant cannot be zero")
-	})
-
 	t.Run("SimpleDerivation", func(t *testing.T) {
 		// Generate an asset ID with a zero variant (and standard = 0)
 		identifier, err := GenerateAssetIDv0(RandomAccountID(), 0, 0)

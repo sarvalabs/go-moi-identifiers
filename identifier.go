@@ -3,7 +3,6 @@ package identifiers
 import (
 	"encoding/binary"
 	"encoding/hex"
-	"errors"
 )
 
 // IdentifierKind represents the kinds of recognized identifiers.
@@ -131,20 +130,10 @@ func (id Identifier) IsVariant() bool {
 }
 
 // DeriveVariant returns a new Identifier with the given variant ID and specified flags set/unset.
-// Returns an error if the given flags are not supported for the Identifier tag or
-// if attempting to derive from a derived identifier.
+// Returns an error if the given flags are not supported for the Identifier tag.
 func (id Identifier) DeriveVariant(variant uint32, set []Flag, unset []Flag) (Identifier, error) {
-	// Check if the identifier is already a variant
-	if id.IsVariant() {
-		return Nil, errors.New("cannot derive from a derived identifier")
-	}
-
-	// Check that the target variant is not zero
-	if variant == 0 {
-		return Nil, errors.New("derivation target variant cannot be zero")
-	}
-
 	var derived Identifier
+
 	// Copy the original identifier
 	copy(derived[:], id[:])
 	// Encode the new variant ID
@@ -190,7 +179,7 @@ func (id *Identifier) MarshalText() ([]byte, error) {
 	return marshal32(*id)
 }
 
-// UnmarshalText implements the encoding.TextUnmarshaler interface for Identifier
+// UnmarshalText implements the encoding.TextUnmarshale r interface for Identifier
 func (id *Identifier) UnmarshalText(data []byte) error {
 	decoded, err := unmarshal32(data)
 	if err != nil {
