@@ -1,7 +1,7 @@
 package identifiers
 
 import (
-	"encoding"
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -188,29 +188,36 @@ func TestIdentifier_DeriveVariant(t *testing.T) {
 }
 
 func TestIdentifier_TextMarshal(t *testing.T) {
-	// Ensure Identifier implements text marshaling interfaces
-	var _ encoding.TextMarshaler = (*Identifier)(nil)
-	var _ encoding.TextUnmarshaler = (*Identifier)(nil)
+	identifier := RandomAssetIDv0().AsIdentifier()
 
-	// Create a sample identifier
-	var original Identifier
-	for i := range original {
-		original[i] = byte(i)
-	}
+	encoded, err := json.Marshal(identifier)
+	require.NoError(t, err)
 
-	// Test MarshalText
-	marshaledText, err := original.MarshalText()
-	require.NoError(t, err, "MarshalText should not return an error")
+	t.Run("Unmarshal_Success", func(t *testing.T) {
+		var decoded Identifier
 
-	// Test UnmarshalText
-	var unmarshaled Identifier
-	err = unmarshaled.UnmarshalText(marshaledText)
-	require.NoError(t, err, "UnmarshalText should not return an error")
+		require.NoError(t, json.Unmarshal(encoded, &decoded))
+		require.Equal(t, identifier, decoded)
+	})
 
-	// Verify that unmarshaled matches original
-	assert.Equal(t, original, unmarshaled, "Unmarshaled identifier should match original")
+	t.Run("Unmarshal_MissingPrefix", func(t *testing.T) {
+		var decoded Identifier
 
-	// Test UnmarshalText with invalid data
-	err = unmarshaled.UnmarshalText([]byte("invalid"))
-	require.Error(t, err, "UnmarshalText should return an error for invalid data")
+		require.Equal(t, json.Unmarshal([]byte(`"invalid-json"`), &decoded), ErrMissingHexPrefix)
+	})
+
+	t.Run("Unmarshal_InvalidLength", func(t *testing.T) {
+		var decoded Identifier
+
+		require.Equal(t, json.Unmarshal([]byte(`"0xffabcd"`), &decoded), ErrInvalidLength)
+	})
+
+	t.Run("Unmarshal_HexError", func(t *testing.T) {
+		var decoded Identifier
+
+		require.EqualError(t,
+			json.Unmarshal([]byte(`"0xYY01001001020304050607081112131415161718212223242526272800000042"`), &decoded),
+			"encoding/hex: invalid byte: U+0059 'Y'",
+		)
+	})
 }

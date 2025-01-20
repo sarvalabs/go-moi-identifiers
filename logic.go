@@ -1,6 +1,7 @@
 package identifiers
 
 import (
+	"encoding"
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
@@ -142,6 +143,12 @@ func (logic LogicID) Validate() error {
 
 	return nil
 }
+
+var (
+	// Ensure LogicID implements text marshaling interfaces
+	_ encoding.TextMarshaler   = (*LogicID)(nil)
+	_ encoding.TextUnmarshaler = (*LogicID)(nil)
+)
 
 // MarshalText implements the encoding.TextMarshaler interface for LogicID
 func (logic LogicID) MarshalText() ([]byte, error) {

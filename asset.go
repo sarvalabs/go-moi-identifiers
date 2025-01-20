@@ -1,6 +1,7 @@
 package identifiers
 
 import (
+	"encoding"
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
@@ -149,6 +150,12 @@ func (asset AssetID) Validate() error {
 
 	return nil
 }
+
+var (
+	// Ensure AssetID implements text marshaling interfaces
+	_ encoding.TextMarshaler   = (*AssetID)(nil)
+	_ encoding.TextUnmarshaler = (*AssetID)(nil)
+)
 
 // MarshalText implements the encoding.TextMarshaler interface for AssetID
 func (asset AssetID) MarshalText() ([]byte, error) {

@@ -1,6 +1,7 @@
 package identifiers
 
 import (
+	"encoding"
 	"encoding/binary"
 	"encoding/hex"
 )
@@ -174,12 +175,18 @@ func (id Identifier) AsAssetID() (AssetID, error) { return NewAssetID(id) }
 // Returns an error if the Identifier is not a valid LogicID
 func (id Identifier) AsLogicID() (LogicID, error) { return NewLogicID(id) }
 
+var (
+	// Ensure Identifier implements text marshaling interfaces
+	_ encoding.TextMarshaler   = (*Identifier)(nil)
+	_ encoding.TextUnmarshaler = (*Identifier)(nil)
+)
+
 // MarshalText implements the encoding.TextMarshaler interface for Identifier
-func (id *Identifier) MarshalText() ([]byte, error) {
-	return marshal32(*id)
+func (id Identifier) MarshalText() ([]byte, error) {
+	return marshal32(id)
 }
 
-// UnmarshalText implements the encoding.TextUnmarshale r interface for Identifier
+// UnmarshalText implements the encoding.TextUnmarshaler interface for Identifier
 func (id *Identifier) UnmarshalText(data []byte) error {
 	decoded, err := unmarshal32(data)
 	if err != nil {

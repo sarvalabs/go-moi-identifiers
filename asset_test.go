@@ -242,37 +242,38 @@ func TestAssetID_TextMarshal(t *testing.T) {
 	t.Run("Unmarshal_Success", func(t *testing.T) {
 		var decoded AssetID
 
-		err = json.Unmarshal(encoded, &decoded)
-		require.NoError(t, err)
+		require.NoError(t, json.Unmarshal(encoded, &decoded))
 		require.Equal(t, assetID, decoded)
 	})
 
 	t.Run("Unmarshal_MissingPrefix", func(t *testing.T) {
 		var decoded AssetID
 
-		err = json.Unmarshal([]byte(`"invalid-json"`), &decoded)
-		require.Equal(t, err, ErrMissingHexPrefix)
+		require.Equal(t, json.Unmarshal([]byte(`"invalid-json"`), &decoded), ErrMissingHexPrefix)
 	})
 
 	t.Run("Unmarshal_InvalidLength", func(t *testing.T) {
 		var decoded AssetID
 
-		err = json.Unmarshal([]byte(`"0xffabcd"`), &decoded)
-		require.Equal(t, err, ErrInvalidLength)
+		require.Equal(t, json.Unmarshal([]byte(`"0xffabcd"`), &decoded), ErrInvalidLength)
 	})
 
 	t.Run("Unmarshal_HexError", func(t *testing.T) {
 		var decoded AssetID
 
-		err = json.Unmarshal([]byte(`"0xYY01001001020304050607081112131415161718212223242526272800000042"`), &decoded)
-		require.EqualError(t, err, "encoding/hex: invalid byte: U+0059 'Y'")
+		require.EqualError(t,
+			json.Unmarshal([]byte(`"0xYY01001001020304050607081112131415161718212223242526272800000042"`), &decoded),
+			"encoding/hex: invalid byte: U+0059 'Y'",
+		)
 	})
 
 	t.Run("Unmarshal_Invalid", func(t *testing.T) {
 		var decoded AssetID
 
-		err = json.Unmarshal([]byte(`"0xFF01001001020304050607081112131415161718212223242526272800000042"`), &decoded)
-		require.EqualError(t, err, "invalid tag: unsupported tag kind")
+		require.EqualError(t,
+			json.Unmarshal([]byte(`"0xFF01001001020304050607081112131415161718212223242526272800000042"`), &decoded),
+			"invalid tag: unsupported tag kind",
+		)
 	})
 }
 

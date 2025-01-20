@@ -1,6 +1,7 @@
 package identifiers
 
 import (
+	"encoding"
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
@@ -146,6 +147,12 @@ func (participant ParticipantID) Validate() error {
 
 	return nil
 }
+
+var (
+	// Ensure ParticipantID implements text marshaling interfaces
+	_ encoding.TextMarshaler   = (*ParticipantID)(nil)
+	_ encoding.TextUnmarshaler = (*ParticipantID)(nil)
+)
 
 // MarshalText implements the encoding.TextMarshaler interface for ParticipantID
 func (participant ParticipantID) MarshalText() ([]byte, error) {
