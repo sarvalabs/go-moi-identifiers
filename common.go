@@ -6,6 +6,8 @@ import (
 	"encoding/hex"
 	"errors"
 	"strings"
+
+	"github.com/sarvalabs/go-polo"
 )
 
 // Nil is a nil [32]byte value.
@@ -107,6 +109,30 @@ func unmarshal32(data []byte) ([32]byte, error) {
 	}
 
 	return [32]byte(decoded), nil
+}
+
+func polorize32(data [32]byte) (*polo.Polorizer, error) {
+	// Create a new polorizer
+	polorizer := polo.NewPolorizer()
+	// Encode the given 32-byte value
+	polorizer.PolorizeBytes(data[:])
+
+	return polorizer, nil
+}
+
+func depolorize32(buffer *polo.Depolorizer) ([32]byte, error) {
+	// Check if buffer contains a null tag
+	if buffer.IsNull() {
+		return Nil, nil
+	}
+
+	// Attempt to decode a 32-byte value
+	decoded, err := buffer.DepolorizeBytes32()
+	if err != nil {
+		return Nil, err
+	}
+
+	return decoded, nil
 }
 
 // must is correctness enforcer for error handling.

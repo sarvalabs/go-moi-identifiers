@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/sarvalabs/go-polo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -218,47 +219,47 @@ func TestAssetID_Constructor(t *testing.T) {
 }
 
 func TestAssetID_TextMarshal(t *testing.T) {
-	// Create a test AssetID
-	data := [32]byte{
-		byte(TagAssetV0), // Tag
-		0b00000001,       // Flags
-		0x00, 0x10,       // Standard
+	t.Run("Success", func(t *testing.T) {
+		// Create a test AssetID
+		data := [32]byte{
+			byte(TagAssetV0), // Tag
+			0b00000001,       // Flags
+			0x00, 0x10,       // Standard
 
-		// Fingerprint
-		0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-		0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,
-		0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
+			// Fingerprint
+			0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+			0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,
+			0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
 
-		0x00, 0x00, 0x00, 0x42, // Variant
-	}
+			0x00, 0x00, 0x00, 0x42, // Variant
+		}
 
-	assetID, err := NewAssetID(data)
-	require.NoError(t, err)
+		assetID, err := NewAssetID(data)
+		require.NoError(t, err)
 
-	encoded, err := json.Marshal(assetID)
-	require.NoError(t, err)
-	require.Equal(t, `"0x1001001001020304050607081112131415161718212223242526272800000042"`, string(encoded))
+		encoded, err := json.Marshal(assetID)
+		require.NoError(t, err)
+		require.Equal(t, `"0x1001001001020304050607081112131415161718212223242526272800000042"`, string(encoded))
 
-	t.Run("Unmarshal_Success", func(t *testing.T) {
 		var decoded AssetID
 
 		require.NoError(t, json.Unmarshal(encoded, &decoded))
 		require.Equal(t, assetID, decoded)
 	})
 
-	t.Run("Unmarshal_MissingPrefix", func(t *testing.T) {
+	t.Run("MissingPrefix", func(t *testing.T) {
 		var decoded AssetID
 
 		require.Equal(t, json.Unmarshal([]byte(`"invalid-json"`), &decoded), ErrMissingHexPrefix)
 	})
 
-	t.Run("Unmarshal_InvalidLength", func(t *testing.T) {
+	t.Run("InvalidLength", func(t *testing.T) {
 		var decoded AssetID
 
 		require.Equal(t, json.Unmarshal([]byte(`"0xffabcd"`), &decoded), ErrInvalidLength)
 	})
 
-	t.Run("Unmarshal_HexError", func(t *testing.T) {
+	t.Run("HexError", func(t *testing.T) {
 		var decoded AssetID
 
 		require.EqualError(t,
@@ -274,6 +275,52 @@ func TestAssetID_TextMarshal(t *testing.T) {
 			json.Unmarshal([]byte(`"0xFF01001001020304050607081112131415161718212223242526272800000042"`), &decoded),
 			"invalid tag: unsupported tag kind",
 		)
+	})
+}
+
+func TestAssetID_Polorization(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		assetID := RandomAssetIDv0()
+		encoded, err := polo.Polorize(assetID)
+		require.NoError(t, err)
+
+		var decoded AssetID
+
+		require.NoError(t, polo.Depolorize(&decoded, encoded))
+		require.Equal(t, assetID, decoded)
+	})
+
+	t.Run("IncompatibleWire", func(t *testing.T) {
+		var decoded AssetID
+
+		require.EqualError(t,
+			polo.Depolorize(&decoded, []byte{0x3}),
+			"incompatible wire: unexpected wiretype 'posint'. expected one of: {null, word}",
+		)
+	})
+
+	t.Run("InvalidAssetID", func(t *testing.T) {
+		// Create an invalid AssetID
+		data := [32]byte{
+			byte(TagAssetV0), // Tag
+			0b11111111,       // Invalid Flags
+			0x00, 0x10,       // Standard
+
+			// Fingerprint
+			0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+			0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,
+			0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
+
+			0x00, 0x00, 0x00, 0x42, // Variant
+		}
+
+		invalid := AssetID(data)
+		encoded, err := polo.Polorize(invalid)
+		require.NoError(t, err)
+
+		var decoded AssetID
+
+		require.EqualError(t, polo.Depolorize(&decoded, encoded), "invalid flags: unsupported flags for asset id")
 	})
 }
 

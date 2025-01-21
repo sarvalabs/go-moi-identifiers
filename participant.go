@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"math/rand/v2"
+
+	"github.com/sarvalabs/go-polo"
 )
 
 // ParticipantID is a unique identifier for a participant in the MOI Protocol.
@@ -152,6 +154,10 @@ var (
 	// Ensure ParticipantID implements text marshaling interfaces
 	_ encoding.TextMarshaler   = (*ParticipantID)(nil)
 	_ encoding.TextUnmarshaler = (*ParticipantID)(nil)
+
+	// Ensure ParticipantID implements polo serialization interfaces
+	_ polo.Polorizable   = (*ParticipantID)(nil)
+	_ polo.Depolorizable = (*ParticipantID)(nil)
 )
 
 // MarshalText implements the encoding.TextMarshaler interface for ParticipantID
@@ -162,6 +168,26 @@ func (participant ParticipantID) MarshalText() ([]byte, error) {
 // UnmarshalText implements the encoding.TextUnmarshaler interface for ParticipantID
 func (participant *ParticipantID) UnmarshalText(data []byte) error {
 	decoded, err := unmarshal32(data)
+	if err != nil {
+		return err
+	}
+
+	if err = ParticipantID(decoded).Validate(); err != nil {
+		return err
+	}
+
+	*participant = decoded
+	return nil
+}
+
+// Polorize implements the polo.Polorizable interface for ParticipantID
+func (participant ParticipantID) Polorize() (*polo.Polorizer, error) {
+	return polorize32(participant)
+}
+
+// Depolorize implements the polo.Depolorizable interface for ParticipantID
+func (participant *ParticipantID) Depolorize(depolorizer *polo.Depolorizer) error {
+	decoded, err := depolorize32(depolorizer)
 	if err != nil {
 		return err
 	}

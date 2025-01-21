@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"math/rand/v2"
+
+	"github.com/sarvalabs/go-polo"
 )
 
 // LogicID is a unique identifier for a logic in the MOI Protocol.
@@ -148,6 +150,10 @@ var (
 	// Ensure LogicID implements text marshaling interfaces
 	_ encoding.TextMarshaler   = (*LogicID)(nil)
 	_ encoding.TextUnmarshaler = (*LogicID)(nil)
+
+	// Ensure LogicID implements polo serialization interfaces
+	_ polo.Polorizable   = (*LogicID)(nil)
+	_ polo.Depolorizable = (*LogicID)(nil)
 )
 
 // MarshalText implements the encoding.TextMarshaler interface for LogicID
@@ -158,6 +164,26 @@ func (logic LogicID) MarshalText() ([]byte, error) {
 // UnmarshalText implements the encoding.TextUnmarshaler interface for LogicID
 func (logic *LogicID) UnmarshalText(data []byte) error {
 	decoded, err := unmarshal32(data)
+	if err != nil {
+		return err
+	}
+
+	if err = LogicID(decoded).Validate(); err != nil {
+		return err
+	}
+
+	*logic = decoded
+	return nil
+}
+
+// Polorize implements the polo.Polorizable interface for LogicID
+func (logic LogicID) Polorize() (*polo.Polorizer, error) {
+	return polorize32(logic)
+}
+
+// Depolorize implements the polo.Depolorizable interface for LogicID
+func (logic *LogicID) Depolorize(depolorizer *polo.Depolorizer) error {
+	decoded, err := depolorize32(depolorizer)
 	if err != nil {
 		return err
 	}

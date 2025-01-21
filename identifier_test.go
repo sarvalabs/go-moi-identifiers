@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/sarvalabs/go-polo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -210,36 +211,97 @@ func TestIdentifier_DeriveVariant(t *testing.T) {
 }
 
 func TestIdentifier_TextMarshal(t *testing.T) {
-	identifier := RandomAssetIDv0().AsIdentifier()
+	t.Run("Success", func(t *testing.T) {
+		identifier := RandomAssetIDv0().AsIdentifier()
+		encoded, err := json.Marshal(identifier)
+		require.NoError(t, err)
 
-	encoded, err := json.Marshal(identifier)
-	require.NoError(t, err)
-
-	t.Run("Unmarshal_Success", func(t *testing.T) {
 		var decoded Identifier
 
 		require.NoError(t, json.Unmarshal(encoded, &decoded))
 		require.Equal(t, identifier, decoded)
 	})
 
-	t.Run("Unmarshal_MissingPrefix", func(t *testing.T) {
+	t.Run("MissingPrefix", func(t *testing.T) {
 		var decoded Identifier
 
 		require.Equal(t, json.Unmarshal([]byte(`"invalid-json"`), &decoded), ErrMissingHexPrefix)
 	})
 
-	t.Run("Unmarshal_InvalidLength", func(t *testing.T) {
+	t.Run("InvalidLength", func(t *testing.T) {
 		var decoded Identifier
 
 		require.Equal(t, json.Unmarshal([]byte(`"0xffabcd"`), &decoded), ErrInvalidLength)
 	})
 
-	t.Run("Unmarshal_HexError", func(t *testing.T) {
+	t.Run("HexError", func(t *testing.T) {
 		var decoded Identifier
 
 		require.EqualError(t,
 			json.Unmarshal([]byte(`"0xYY01001001020304050607081112131415161718212223242526272800000042"`), &decoded),
 			"encoding/hex: invalid byte: U+0059 'Y'",
+		)
+	})
+}
+
+func TestIdentifier_Polorization(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		identifier := RandomAssetIDv0().AsIdentifier()
+		encoded, err := polo.Polorize(identifier)
+		require.NoError(t, err)
+
+		var decoded Identifier
+
+		require.NoError(t, polo.Depolorize(&decoded, encoded))
+		require.Equal(t, identifier, decoded)
+	})
+
+	t.Run("SuccessNull", func(t *testing.T) {
+		encoded, err := polo.Polorize(Nil)
+		require.NoError(t, err)
+
+		var decoded Identifier
+
+		require.NoError(t, polo.Depolorize(&decoded, encoded))
+		require.Equal(t, Identifier(Nil), decoded)
+	})
+
+	t.Run("SuccessNullWire", func(t *testing.T) {
+		var decoded Identifier
+
+		require.NoError(t, polo.Depolorize(&decoded, []byte{0}))
+		require.Equal(t, Identifier(Nil), decoded)
+	})
+
+	t.Run("IncompatibleWire", func(t *testing.T) {
+		var decoded Identifier
+
+		require.EqualError(t,
+			polo.Depolorize(&decoded, []byte{0x3}),
+			"incompatible wire: unexpected wiretype 'posint'. expected one of: {null, word}",
+		)
+	})
+
+	t.Run("LessThan32", func(t *testing.T) {
+		var decoded Identifier
+
+		require.NoError(t, polo.Depolorize(&decoded, []byte{0x6, 0x1, 0x2, 0x3}))
+		require.Equal(t, Identifier{0x1, 0x2, 0x3}, decoded)
+	})
+
+	t.Run("MoreThan32", func(t *testing.T) {
+		var decoded Identifier
+
+		require.EqualError(t,
+			polo.Depolorize(&decoded, []byte{
+				0x6,
+				0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8,
+				0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8,
+				0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8,
+				0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8,
+				0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8,
+			}),
+			"incompatible value error: excess data for 32-byte array",
 		)
 	})
 }
