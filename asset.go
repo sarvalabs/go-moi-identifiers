@@ -16,7 +16,7 @@ import (
 //   - Flags: The second byte contains flags for the asset identifier.
 //   - Metadata: The next 2 bytes contain the standard for the asset.
 //
-// Like all identifiers, the AssetID also contains an AccountID and a Variant ID.
+// Like all identifiers, the AssetID also contains a Fingerprint and a Variant ID.
 // Flags of an AssetID are specific to a version and are invalid if set in an unsupported version.
 type AssetID [32]byte
 
@@ -93,9 +93,9 @@ func (asset AssetID) Tag() IdentifierTag {
 	return IdentifierTag(asset[0])
 }
 
-// AccountID returns the 24-byte account ID from the AssetID.
-func (asset AssetID) AccountID() [24]byte {
-	return trimAccount(asset)
+// Fingerprint returns the 24-byte fingerprint ID from the AssetID.
+func (asset AssetID) Fingerprint() [24]byte {
+	return trimFingerprint(asset)
 }
 
 // Variant returns the 32-bit variant ID from the AssetID.
@@ -180,8 +180,8 @@ func (asset *AssetID) UnmarshalText(data []byte) error {
 // GenerateAssetIDv0 creates a new AssetID for v0 with the given parameters.
 // Returns an error if unsupported flags are used.
 //
-// [tag:1][{systemic}{reserved:5}{logical}{stateful}][standard:2][account:24][variant:4]
-func GenerateAssetIDv0(account [24]byte, variant uint32, standard uint16, flags ...Flag) (AssetID, error) {
+// [tag:1][{systemic}{reserved:5}{logical}{stateful}][standard:2][fingerprint:24][variant:4]
+func GenerateAssetIDv0(fingerprint [24]byte, variant uint32, standard uint16, flags ...Flag) (AssetID, error) {
 	// Create the metadata buffer
 	// [tag][flags][standard]
 	metadata := make([]byte, 4)
@@ -203,10 +203,10 @@ func GenerateAssetIDv0(account [24]byte, variant uint32, standard uint16, flags 
 	binary.BigEndian.PutUint16(metadata[2:], standard)
 
 	// Order the asset ID buffer
-	// [metadata][account][variant]
+	// [metadata][fingerprint][variant]
 	buffer := make([]byte, 0, 32)
 	buffer = append(buffer, metadata...)
-	buffer = append(buffer, account[:]...)
+	buffer = append(buffer, fingerprint[:]...)
 	// Append 4 bytes for the variant and encode the value into it
 	buffer = append(buffer, make([]byte, 4)...)
 	binary.BigEndian.PutUint32(buffer[28:], variant)
@@ -215,7 +215,7 @@ func GenerateAssetIDv0(account [24]byte, variant uint32, standard uint16, flags 
 }
 
 // RandomAssetIDv0 creates a random v0 AssetID with a
-// random account ID, variant ID, standard and flags.
+// random fingerprint ID, variant ID, standard and flags.
 //   - There is a 50% chance that the AssetLogical flag will be set.
 //   - There is a 50% chance that the AssetStateful flag will be set.
 //   - There is a 0% chance that the Systemic flag will be set.
@@ -231,7 +231,7 @@ func RandomAssetIDv0() AssetID {
 	}
 
 	// Safe to ignore error as the flags are supported
-	asset, _ := GenerateAssetIDv0(RandomAccountID(), rand.Uint32(), uint16(rand.UintN(math.MaxUint16)), flags...)
+	asset, _ := GenerateAssetIDv0(RandomFingerprint(), rand.Uint32(), uint16(rand.UintN(math.MaxUint16)), flags...)
 
 	return asset
 }

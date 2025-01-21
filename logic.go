@@ -15,7 +15,7 @@ import (
 //   - Flags: The second byte contains flags for the logic identifier.
 //   - Metadata: As of v0, LogicID has no metadata.
 //
-// Like all identifiers, the LogicID also contains an AccountID and a Variant ID.
+// Like all identifiers, the LogicID also contains an Fingerprint and a Variant ID.
 // Flags of a LogicID are specific to a version and are invalid if set in an unsupported version.
 type LogicID [32]byte
 
@@ -92,9 +92,9 @@ func (logic LogicID) Tag() IdentifierTag {
 	return IdentifierTag(logic[0])
 }
 
-// AccountID returns the 24-byte account ID from the LogicID.
-func (logic LogicID) AccountID() [24]byte {
-	return trimAccount(logic)
+// Fingerprint returns the 24-byte fingerprint ID from the LogicID.
+func (logic LogicID) Fingerprint() [24]byte {
+	return trimFingerprint(logic)
 }
 
 // Variant returns the 32-bit variant ID from the LogicID.
@@ -173,8 +173,8 @@ func (logic *LogicID) UnmarshalText(data []byte) error {
 // GenerateLogicIDv0 creates a new LogicID for v0 with the given parameters.
 // Returns an error if unsupported flags are used.
 //
-// [tag:1][{systemic}{reserved:4}{auxiliary}{extrinsic}{intrinsic}][standard:2][account:24][variant:4]
-func GenerateLogicIDv0(account [24]byte, variant uint32, flags ...Flag) (LogicID, error) {
+// [tag:1][{systemic}{reserved:4}{auxiliary}{extrinsic}{intrinsic}][standard:2][fingerprint:24][variant:4]
+func GenerateLogicIDv0(fingerprint [24]byte, variant uint32, flags ...Flag) (LogicID, error) {
 	// Create the metadata buffer
 	// [tag][flags][standard]
 	metadata := make([]byte, 4)
@@ -193,10 +193,10 @@ func GenerateLogicIDv0(account [24]byte, variant uint32, flags ...Flag) (LogicID
 	}
 
 	// Order the logic ID buffer
-	// [metadata][account][variant]
+	// [metadata][fingerprint][variant]
 	buffer := make([]byte, 0, 32)
 	buffer = append(buffer, metadata...)
-	buffer = append(buffer, account[:]...)
+	buffer = append(buffer, fingerprint[:]...)
 	// Append 4 bytes for the variant and encode the value into it
 	buffer = append(buffer, make([]byte, 4)...)
 	binary.BigEndian.PutUint32(buffer[28:], variant)
@@ -205,7 +205,7 @@ func GenerateLogicIDv0(account [24]byte, variant uint32, flags ...Flag) (LogicID
 }
 
 // RandomLogicIDv0 creates a random v0 LogicID
-// with a random account ID, variant ID and flags.
+// with a random fingerprint, variant ID and flags.
 //   - There is a 50% chance that the LogicIntrinsic flag will be set.
 //   - There is a 50% chance that the LogicExtrinsic flag will be set.
 //   - There is a 50% chance that the LogicAuxiliary flag will be set.
@@ -226,7 +226,7 @@ func RandomLogicIDv0() LogicID {
 	}
 
 	// Safe to ignore error as the flags are supported
-	logic, _ := GenerateLogicIDv0(RandomAccountID(), rand.Uint32(), flags...)
+	logic, _ := GenerateLogicIDv0(RandomFingerprint(), rand.Uint32(), flags...)
 
 	return logic
 }

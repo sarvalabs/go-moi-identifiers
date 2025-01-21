@@ -12,10 +12,10 @@ import (
 // Can be used to represent any nil identifier.
 var Nil [32]byte
 
-// RandomAccountID generates a random 24-byte account ID
-func RandomAccountID() (account [24]byte) {
-	_, _ = rand.Read(account[:])
-	return account
+// RandomFingerprint generates a random 24-byte fingerprint
+func RandomFingerprint() (fingerprint [24]byte) {
+	_, _ = rand.Read(fingerprint[:])
+	return fingerprint
 }
 
 var (
@@ -61,8 +61,8 @@ func decodeHexString(str string) ([]byte, error) {
 	return decoded, nil
 }
 
-// trimAccount returns the 24 bytes in the middle of the given 32-byte array.
-func trimAccount(bytes [32]byte) [24]byte {
+// trimFingerprint returns the 24 bytes in the middle of the given 32-byte array.
+func trimFingerprint(bytes [32]byte) [24]byte {
 	return [24]byte(bytes[4:28])
 }
 

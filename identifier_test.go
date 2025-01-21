@@ -78,7 +78,7 @@ func TestIdentifier(t *testing.T) {
 		0b00000001,             // Flags
 		0x02, 0x03,             // Metadata
 
-		// Account ID
+		// Fingerprint
 		0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B,
 		0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B,
 
@@ -93,11 +93,11 @@ func TestIdentifier(t *testing.T) {
 	assert.Equal(t, byte(0b00000001), id.Flags())
 	assert.Equal(t, [2]byte{0x02, 0x03}, id.Metadata())
 
-	// Test AccountID
+	// Test Fingerprint
 	assert.Equal(t, [24]byte{
 		0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B,
 		0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2A, 0x2B,
-	}, id.AccountID())
+	}, id.Fingerprint())
 
 	// Test Variant
 	assert.Equal(t, uint32(0x30313233), id.Variant())
@@ -142,7 +142,7 @@ func TestIdentifier_FromHex(t *testing.T) {
 func TestIdentifier_DeriveVariant(t *testing.T) {
 	t.Run("SimpleDerivation", func(t *testing.T) {
 		// Generate an asset ID with a zero variant (and standard = 0)
-		identifier, err := GenerateAssetIDv0(RandomAccountID(), 0, 0)
+		identifier, err := GenerateAssetIDv0(RandomFingerprint(), 0, 0)
 		require.NoError(t, err)
 
 		// Attempt derivation without changing any flags
@@ -157,7 +157,7 @@ func TestIdentifier_DeriveVariant(t *testing.T) {
 
 	t.Run("DeriveWithSetFlag", func(t *testing.T) {
 		// Generate an asset ID with a zero variant (and standard = 0)
-		identifier, err := GenerateAssetIDv0(RandomAccountID(), 0, 0)
+		identifier, err := GenerateAssetIDv0(RandomFingerprint(), 0, 0)
 		require.NoError(t, err)
 
 		// Attempt derivation with a new variant and a flag set
@@ -172,7 +172,7 @@ func TestIdentifier_DeriveVariant(t *testing.T) {
 
 	t.Run("DeriveWithUnsupportedSet", func(t *testing.T) {
 		// Generate a logic ID with a zero variant
-		identifier, err := GenerateLogicIDv0(RandomAccountID(), 0)
+		identifier, err := GenerateLogicIDv0(RandomFingerprint(), 0)
 		require.NoError(t, err)
 
 		// Attempt derivation with a new variant and an unsupported flag set
@@ -183,7 +183,7 @@ func TestIdentifier_DeriveVariant(t *testing.T) {
 	t.Run("DeriveWithUnsetFlag", func(t *testing.T) {
 		// Generate an asset ID with a zero variant (and standard = 0)
 		// Set the AssetStateful flag
-		identifier, err := GenerateAssetIDv0(RandomAccountID(), 0, 0, AssetStateful)
+		identifier, err := GenerateAssetIDv0(RandomFingerprint(), 0, 0, AssetStateful)
 		require.NoError(t, err)
 		require.True(t, identifier.Flag(AssetStateful))
 
@@ -199,7 +199,7 @@ func TestIdentifier_DeriveVariant(t *testing.T) {
 
 	t.Run("DeriveWithUnsupportedUnset", func(t *testing.T) {
 		// Generate a logic ID with a zero variant
-		identifier, err := GenerateLogicIDv0(RandomAccountID(), 0, LogicIntrinsic)
+		identifier, err := GenerateLogicIDv0(RandomFingerprint(), 0, LogicIntrinsic)
 		require.NoError(t, err)
 		require.True(t, identifier.Flag(LogicIntrinsic))
 

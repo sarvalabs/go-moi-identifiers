@@ -15,7 +15,7 @@ import (
 //   - Flags: The second byte contains flags for the participant identifier.
 //   - Metadata: As of v0, ParticipantID has no metadata.
 //
-// Like all identifiers, the ParticipantID also contains an AccountID and a Variant ID.
+// Like all identifiers, the ParticipantID also contains a Fingerprint and a Variant ID.
 // Flags of a ParticipantID are specific to a version and are invalid if set in an unsupported version.
 type ParticipantID [32]byte
 
@@ -96,9 +96,9 @@ func (participant ParticipantID) Tag() IdentifierTag {
 	return IdentifierTag(participant[0])
 }
 
-// AccountID returns the 24-byte account ID from the ParticipantID.
-func (participant ParticipantID) AccountID() [24]byte {
-	return trimAccount(participant)
+// Fingerprint returns the 24-byte fingerprint ID from the ParticipantID.
+func (participant ParticipantID) Fingerprint() [24]byte {
+	return trimFingerprint(participant)
 }
 
 // Variant returns the 32-bit variant ID from the ParticipantID.
@@ -177,8 +177,8 @@ func (participant *ParticipantID) UnmarshalText(data []byte) error {
 // GenerateParticipantIDv0 creates a new ParticipantID for v0 with the given parameters.
 // Returns an error if unsupported flags are used.
 //
-// [tag:1][{systemic}{reserved:7}][standard:2][account:24][variant:4]
-func GenerateParticipantIDv0(account [24]byte, variant uint32, flags ...Flag) (ParticipantID, error) {
+// [tag:1][{systemic}{reserved:7}][standard:2][fingerprint:24][variant:4]
+func GenerateParticipantIDv0(fingerprint [24]byte, variant uint32, flags ...Flag) (ParticipantID, error) {
 	// Create the metadata buffer
 	// [tag][flags][standard]
 	metadata := make([]byte, 4)
@@ -197,10 +197,10 @@ func GenerateParticipantIDv0(account [24]byte, variant uint32, flags ...Flag) (P
 	}
 
 	// Order the participant ID buffer
-	// [metadata][account][variant]
+	// [metadata][fingerprint][variant]
 	buffer := make([]byte, 0, 32)
 	buffer = append(buffer, metadata...)
-	buffer = append(buffer, account[:]...)
+	buffer = append(buffer, fingerprint[:]...)
 	// Append 4 bytes for the variant and encode the value into it
 	buffer = append(buffer, make([]byte, 4)...)
 	binary.BigEndian.PutUint32(buffer[28:], variant)
@@ -209,10 +209,10 @@ func GenerateParticipantIDv0(account [24]byte, variant uint32, flags ...Flag) (P
 }
 
 // RandomParticipantIDv0 creates a random v0 ParticipantID
-// with a random account ID, variant ID and flags.
+// with a random fingerprint, variant ID and flags.
 //   - There is a 0% chance that the Systemic flag will be set.
 func RandomParticipantIDv0() ParticipantID {
 	// Safe to ignore error as the flags are supported
-	participant, _ := GenerateParticipantIDv0(RandomAccountID(), rand.Uint32())
+	participant, _ := GenerateParticipantIDv0(RandomFingerprint(), rand.Uint32())
 	return participant
 }

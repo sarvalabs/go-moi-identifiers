@@ -82,7 +82,7 @@ func (tag IdentifierTag) Validate() error {
 //   - Tag: The most-significant byte
 //   - Flags: The second byte
 //   - Metadata: The 3rd & 4th byte
-//   - AccountID: The next 24 middle bytes
+//   - Fingerprint: The next 24 middle bytes
 //   - Variant: The 4 least-significant bytes
 //
 // The first byte of the metadata contain a tag represented by IdentifierTag,
@@ -90,7 +90,7 @@ func (tag IdentifierTag) Validate() error {
 // Apart from the tag, the metadata contains 1 byte for flags and upto 2 bytes of
 // additional data that can be used by different kinds of identifiers as required.
 //
-// The next 24 bytes represent the account ID, which is unique to each kind of identifier.
+// The next 24 bytes represent the fingerprint, which is unique to each kind of identifier.
 // The last 4 bytes represent a 32-bit variant number, which can be used for sub-identifiers.
 type Identifier [32]byte
 
@@ -137,8 +137,8 @@ func (id Identifier) Flags() byte { return id[1] }
 // Metadata returns the 3rd & 4th bytes of the Identifier
 func (id Identifier) Metadata() [2]byte { return [2]byte{id[2], id[3]} }
 
-// AccountID returns 24-byte account ID from the Identifier
-func (id Identifier) AccountID() [24]byte { return trimAccount(id) }
+// Fingerprint returns 24-byte fingerprint ID from the Identifier
+func (id Identifier) Fingerprint() [24]byte { return trimFingerprint(id) }
 
 // Variant returns the 32-bit variant ID from the Identifier
 func (id Identifier) Variant() uint32 {

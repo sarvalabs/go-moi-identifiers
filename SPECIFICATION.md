@@ -6,8 +6,8 @@ This specification defines the structure and encoding of identifiers used in the
 
 ## Identifier
 An identifier is a 32-byte value that can be used to uniquely identify an account in the MOI Protocol.
-The underlying account may be a participant, an asset or a logic. This specification leaves room for expansion to
-other account types such as files. 
+The underlying account may be a participant, an asset or a logic. This specification leaves room for 
+expansion to other account types such as files. 
 
 |  Identifier Tags  | Tag Value |     Kind      | Version |    Flags     |    Metadata    |
 |:-----------------:|:---------:|:-------------:|:-------:|:------------:|:--------------:|
@@ -47,20 +47,20 @@ The third and fourth bytes of the identifier are used to store metadata that is 
 identifier. This metadata is used to store additional information about the identifier. Refer to the table 
 above for the metadata encoded for each identifier tag.
 
-### Account ID
-The middle 24 bytes of the identifier (between the 5th and 28th bytes) are used to store the account ID.
-The account ID represents the unique identifier for the account in the MOI Protocol. 
+### Fingerprint
+The middle 24 bytes of the identifier (between the 5th and 28th bytes) are used to store a unique fingerprint 
+which represents a unique value to distinguish between shared entities in the MOI Protocol. 
 
-Multiple identifiers can have the same account ID but different tags, flags and metadata. This allows for
-different accounts to share the same account ID but have different properties.
+Multiple identifiers can have the same fingerprint but different tags, flags and metadata. This allows for
+different entities to share the same fingerprint but have different properties.
 
 ### Variant
 The last 4 bytes of the identifier are used to store a 32-bit variant ID for the identifier. The variant is 
-used to differentiate between different variations of the same account. For example, an asset may use the 
-variant ID for each edition of an NFT.
+used to differentiate between different variations of the same entity with the same fingerprint. For example, 
+an asset may use the variant ID for each edition of an NFT.
 
-The exact usage of the variant ID with an identifier kind and its implication on account handling are left to
-MOI Protocol and are outside the scope of this specification.
+The exact usage of the variant ID with an identifier kind and its implications on account and entity handling 
+are left to MOI Protocol and are outside the scope of this specification.
 
 Any implementation should allow checking if an identifier is a variant. 
 This is true if the identifier has non-zero variant ID.
