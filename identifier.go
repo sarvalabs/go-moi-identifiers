@@ -5,8 +5,6 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
-
-	"github.com/sarvalabs/go-polo"
 )
 
 // IdentifierKind represents the kinds of recognized identifiers.
@@ -203,10 +201,6 @@ var (
 	// Ensure Identifier implements text marshaling interfaces
 	_ encoding.TextMarshaler   = (*Identifier)(nil)
 	_ encoding.TextUnmarshaler = (*Identifier)(nil)
-
-	// Ensure Identifier implements polo serialization interfaces
-	_ polo.Polorizable   = (*Identifier)(nil)
-	_ polo.Depolorizable = (*Identifier)(nil)
 )
 
 // MarshalText implements the encoding.TextMarshaler interface for Identifier
@@ -217,22 +211,6 @@ func (id Identifier) MarshalText() ([]byte, error) {
 // UnmarshalText implements the encoding.TextUnmarshaler interface for Identifier
 func (id *Identifier) UnmarshalText(data []byte) error {
 	decoded, err := unmarshal32(data)
-	if err != nil {
-		return err
-	}
-
-	*id = decoded
-	return nil
-}
-
-// Polorize implements the polo.Polorizable interface for Identifier
-func (id Identifier) Polorize() (*polo.Polorizer, error) {
-	return polorize32(id)
-}
-
-// Depolorize implements the polo.Depolorizable interface for Identifier
-func (id *Identifier) Depolorize(depolorizer *polo.Depolorizer) error {
-	decoded, err := depolorize32(depolorizer)
 	if err != nil {
 		return err
 	}

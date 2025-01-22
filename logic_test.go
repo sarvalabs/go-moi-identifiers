@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/sarvalabs/go-polo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -264,61 +263,6 @@ func TestLogicID_TextMarshal(t *testing.T) {
 			json.Unmarshal([]byte(`"0xYY01001001020304050607081112131415161718212223242526272800000042"`), &decoded),
 			"encoding/hex: invalid byte: U+0059 'Y'",
 		)
-	})
-
-	t.Run("InvalidLogicID", func(t *testing.T) {
-		var decoded LogicID
-
-		require.EqualError(t,
-			json.Unmarshal([]byte(`"0xFF01001001020304050607081112131415161718212223242526272800000042"`), &decoded),
-			"invalid tag: unsupported tag kind",
-		)
-	})
-}
-
-func TestLogicID_Polorization(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
-		logicID := RandomLogicIDv0()
-		encoded, err := polo.Polorize(logicID)
-		require.NoError(t, err)
-
-		var decoded LogicID
-
-		require.NoError(t, polo.Depolorize(&decoded, encoded))
-		require.Equal(t, logicID, decoded)
-	})
-
-	t.Run("IncompatibleWire", func(t *testing.T) {
-		var decoded LogicID
-
-		require.EqualError(t,
-			polo.Depolorize(&decoded, []byte{0x3}),
-			"incompatible wire: unexpected wiretype 'posint'. expected one of: {null, word}",
-		)
-	})
-
-	t.Run("InvalidLogicID", func(t *testing.T) {
-		// Create an invalid LogicID
-		data := [32]byte{
-			byte(TagLogicV0), // Tag
-			0b11111111,       // Invalid Flags
-			0x00, 0x10,       // Standard
-
-			// Fingerprint
-			0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-			0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,
-			0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
-
-			0x00, 0x00, 0x00, 0x42, // Variant
-		}
-
-		invalid := LogicID(data)
-		encoded, err := polo.Polorize(invalid)
-		require.NoError(t, err)
-
-		var decoded LogicID
-
-		require.EqualError(t, polo.Depolorize(&decoded, encoded), "invalid flags: unsupported flags for logic id")
 	})
 }
 

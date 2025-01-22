@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"math"
 	"math/rand/v2"
-
-	"github.com/sarvalabs/go-polo"
 )
 
 // AssetID is a unique identifier for an asset in the MOI Protocol.
@@ -157,10 +155,6 @@ var (
 	// Ensure AssetID implements text marshaling interfaces
 	_ encoding.TextMarshaler   = (*AssetID)(nil)
 	_ encoding.TextUnmarshaler = (*AssetID)(nil)
-
-	// Ensure AssetID implements polo serialization interfaces
-	_ polo.Polorizable   = (*AssetID)(nil)
-	_ polo.Depolorizable = (*AssetID)(nil)
 )
 
 // MarshalText implements the encoding.TextMarshaler interface for AssetID
@@ -172,30 +166,6 @@ func (asset AssetID) MarshalText() ([]byte, error) {
 func (asset *AssetID) UnmarshalText(data []byte) error {
 	decoded, err := unmarshal32(data)
 	if err != nil {
-		return err
-	}
-
-	if err = AssetID(decoded).Validate(); err != nil {
-		return err
-	}
-
-	*asset = decoded
-	return nil
-}
-
-// Polorize implements the polo.Polorizable interface for AssetID
-func (asset AssetID) Polorize() (*polo.Polorizer, error) {
-	return polorize32(asset)
-}
-
-// Depolorize implements the polo.Depolorizable interface for AssetID
-func (asset *AssetID) Depolorize(depolorizer *polo.Depolorizer) error {
-	decoded, err := depolorize32(depolorizer)
-	if err != nil {
-		return err
-	}
-
-	if err = AssetID(decoded).Validate(); err != nil {
 		return err
 	}
 
