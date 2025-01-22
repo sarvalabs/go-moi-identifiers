@@ -2,10 +2,7 @@ module github.com/sarvalabs/go-moi-identifiers
 
 go 1.22
 
-require (
-	github.com/sarvalabs/go-polo v0.4.9
-	github.com/stretchr/testify v1.10.0
-)
+require github.com/stretchr/testify v1.10.0
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
